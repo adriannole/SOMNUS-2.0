@@ -21,12 +21,14 @@ const slides = [
     subtitle:
       'Somnus analiza tus hábitos y ciclos de sueño para darte recomendaciones personalizadas respaldadas por IA.',
     accent: 'Personalización inteligente',
+    image: require('../assets/ob1.png'),
   },
   {
     title: 'Relájate y desconecta',
     subtitle:
       'Disfruta de música relajante, cuentos guiados y ruido blanco para conciliar el sueño más rápido y profundo.',
     accent: 'Sonidos y cuentos a tu medida',
+    image: require('../assets/ob2.webp'),
   },
 ];
 
@@ -121,11 +123,11 @@ export default function OnboardingScreen() {
           <View style={styles.illustrationContainer}>
             <View style={[styles.illustrationCircle, { backgroundColor: theme.ACCENT_COLOR + '33' }]} />
             <View style={styles.illustrationCard}>
-              <Image
-                source={require('../assets/ob1.webp')}
-                style={styles.illustrationImage}
-                resizeMode="contain"
-              />
+                  <Image
+                    source={slide.image}
+                    style={styles.illustrationImage}
+                    resizeMode="contain"
+                  />
             </View>
           </View>
           <Text style={[styles.badge, { color: theme.ACCENT_COLOR, borderColor: theme.ACCENT_COLOR }]}>

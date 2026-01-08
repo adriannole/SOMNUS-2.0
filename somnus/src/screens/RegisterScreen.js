@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Animated,
 } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { useTheme } from '../hooks/useTheme';
@@ -18,6 +19,7 @@ export default function RegisterScreen() {
   const { theme, isDark, toggleTheme } = useTheme();
   const styles = createLoginStyles(theme);
   const router = useRouter();
+  const switchAnim = useRef(new Animated.Value(isDark ? 1 : 0)).current;
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -33,6 +35,16 @@ export default function RegisterScreen() {
     console.log('Register:', { firstName, lastName, email, password, confirmPassword });
   };
 
+  const handleToggleTheme = () => {
+    Animated.spring(switchAnim, {
+      toValue: isDark ? 0 : 1,
+      friction: 7,
+      tension: 40,
+      useNativeDriver: false,
+    }).start();
+    toggleTheme();
+  };
+
   return (
     <>
       <AnimatedBackground isDark={isDark} theme={theme} />
@@ -42,11 +54,43 @@ export default function RegisterScreen() {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
       >
 
-        <TouchableOpacity style={styles.themeToggle} onPress={toggleTheme} activeOpacity={0.7}>
-        <View style={styles.iconContainer}>
-          <Text style={styles.themeIcon}>{isDark ? '☀' : '✦'}</Text>
-        </View>
-      </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.themeToggleContainer} 
+          onPress={handleToggleTheme}
+          activeOpacity={0.9}
+        >
+          <Animated.View style={[
+            styles.toggleBackground,
+            {
+              backgroundColor: switchAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: ['#E9ECEF', '#2D3748']
+              })
+            }
+          ]}>
+            <Animated.View style={[
+              styles.toggleCircle,
+              {
+                transform: [{
+                  translateX: switchAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [3, 39]
+                  })
+                }]
+              }
+            ]}>
+              <Text style={styles.toggleIcon}>{isDark ? '☾' : '☀'}</Text>
+            </Animated.View>
+            <View style={styles.toggleTextContainer}>
+              <Text style={[styles.toggleText, !isDark && styles.toggleTextActive]}>
+                Claro
+              </Text>
+              <Text style={[styles.toggleText, isDark && styles.toggleTextActive]}>
+                Oscuro
+              </Text>
+            </View>
+          </Animated.View>
+        </TouchableOpacity>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.contentWrapper}>
