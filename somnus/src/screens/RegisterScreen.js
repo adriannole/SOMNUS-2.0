@@ -9,11 +9,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
+  Alert,
 } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { useTheme } from '../hooks/useTheme';
 import { AnimatedBackground } from '../components/AnimatedBackground';
 import { createLoginStyles } from './styles/LoginScreen.styles';
+import { signUpWithProfile } from '../backend/authService';
 
 export default function RegisterScreen() {
   const { theme, isDark, toggleTheme } = useTheme();
@@ -21,6 +23,7 @@ export default function RegisterScreen() {
   const router = useRouter();
   const switchAnim = useRef(new Animated.Value(isDark ? 1 : 0)).current;
 
+  const [age, setAge] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -28,11 +31,43 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [focusedInput, setFocusedInput] = useState(null);
   const [buttonPressed, setButtonPressed] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
+    if (loading) return;
     setButtonPressed(true);
     setTimeout(() => setButtonPressed(false), 200);
-    console.log('Register:', { firstName, lastName, email, password, confirmPassword });
+    const parsedAge = Number(age);
+
+    if (!parsedAge || parsedAge < 1) {
+      Alert.alert('Edad requerida', 'Ingresa una edad valida.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert('Contraseña', 'Las contraseñas no coinciden.');
+      return;
+    }
+
+    setLoading(true);
+
+    const result = await signUpWithProfile({
+      email: email.trim(),
+      password,
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      age: parsedAge,
+    });
+
+    if (!result.success) {
+      Alert.alert('Error al registrar', result.error);
+      setLoading(false);
+      return;
+    }
+
+    Alert.alert('Cuenta creada', 'Tu cuenta ha sido creada con exito.');
+    router.replace('/(tabs)');
+    setLoading(false);
   };
 
   const handleToggleTheme = () => {
@@ -101,6 +136,20 @@ export default function RegisterScreen() {
           </View>
 
           <View style={styles.card}>
+            <Text style={styles.label}>EDAD</Text>
+            <TextInput
+              style={[styles.input, focusedInput === 'age' && styles.inputFocused]}
+              placeholder="Tu edad"
+              placeholderTextColor={theme.TEXT_COLOR + '50'}
+              value={age}
+              onChangeText={setAge}
+              onFocus={() => setFocusedInput('age')}
+              onBlur={() => setFocusedInput(null)}
+              keyboardType="number-pad"
+              maxLength={3}
+              editable
+            />
+
             <Text style={styles.label}>NOMBRE</Text>
             <TextInput
               style={[styles.input, focusedInput === 'firstName' && styles.inputFocused]}
@@ -169,8 +218,11 @@ export default function RegisterScreen() {
               style={[styles.boton, buttonPressed && styles.botonPressed]}
               onPress={handleRegister}
               activeOpacity={0.8}
+              disabled={loading}
             >
-              <Text style={styles.textoBoton}>REGISTRARSE</Text>
+              <Text style={styles.textoBoton}>
+                {loading ? 'CREANDO...' : 'REGISTRARSE'}
+              </Text>
             </TouchableOpacity>
 
             <View style={styles.linkContainer}>

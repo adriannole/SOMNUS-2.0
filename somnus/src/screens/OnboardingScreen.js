@@ -21,7 +21,7 @@ const slides = [
     subtitle:
       'Somnus analiza tus hábitos y ciclos de sueño para darte recomendaciones personalizadas respaldadas por IA.',
     accent: 'Personalización inteligente',
-    image: require('../assets/ob1.png'),
+    image: require('../assets/ob1.webp'),
   },
   {
     title: 'Relájate y desconecta',

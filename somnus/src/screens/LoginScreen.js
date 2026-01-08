@@ -9,26 +9,46 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
+  Alert,
 } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useTheme } from '../hooks/useTheme';
 import { AnimatedBackground } from '../components/AnimatedBackground';
 import { createLoginStyles } from './styles/LoginScreen.styles';
+import { signIn } from '../backend/authService';
 
 export default function LoginScreen() {
   const { theme, isDark, toggleTheme } = useTheme();
   const styles = createLoginStyles(theme);
   const switchAnim = useRef(new Animated.Value(isDark ? 1 : 0)).current;
+  const router = useRouter();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [focusedInput, setFocusedInput] = useState(null);
   const [buttonPressed, setButtonPressed] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
+    if (loading) return;
     setButtonPressed(true);
     setTimeout(() => setButtonPressed(false), 200);
-    console.log('Login:', email, password);
+    setLoading(true);
+
+    const result = await signIn({
+      email: email.trim(),
+      password,
+    });
+
+    if (!result.success) {
+      Alert.alert('Error de inicio', result.error);
+      setLoading(false);
+      return;
+    }
+
+    Alert.alert('Bienvenido', 'Inicio de sesión correcto');
+    router.replace('/(tabs)');
+    setLoading(false);
   };
 
   const handleToggleTheme = () => {
@@ -134,8 +154,11 @@ export default function LoginScreen() {
               style={[styles.boton, buttonPressed && styles.botonPressed]}
               onPress={handleLogin}
               activeOpacity={0.8}
+              disabled={loading}
             >
-              <Text style={styles.textoBoton}>INICIAR SESIÓN</Text>
+              <Text style={styles.textoBoton}>
+                {loading ? 'CONECTANDO...' : 'INICIAR SESIÓN'}
+              </Text>
             </TouchableOpacity>
 
             <View style={styles.linkContainer}>
