@@ -22,6 +22,13 @@ export const createLoginStyles = (theme) =>
       zIndex: 1,
       flex: 1,
       justifyContent: 'center',
+      paddingTop: 20,
+      paddingBottom: 20,
+    },
+    scrollContent: {
+      flexGrow: 1,
+      justifyContent: 'center',
+      paddingBottom: 40,
     },
     header: {
       alignItems: 'center',
@@ -58,7 +65,7 @@ export const createLoginStyles = (theme) =>
       width: 120,
       height: 120,
       resizeMode: 'contain',
-      marginBottom: 15,
+      marginBottom: 12,
     },
     titulo: {
       fontSize: 32,
@@ -75,7 +82,7 @@ export const createLoginStyles = (theme) =>
     },
     card: {
       backgroundColor: theme.BACKGROUND_COLOR,
-      borderRadius: 20,
+        borderRadius: 20,
       padding: 25,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 8 },
@@ -133,7 +140,7 @@ export const createLoginStyles = (theme) =>
     linkContainer: {
       flexDirection: 'row',
       justifyContent: 'center',
-      marginTop: 20,
+      marginTop: 18,
       gap: 5,
     },
     linkText: {
