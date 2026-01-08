@@ -66,7 +66,8 @@ export default function RegisterScreen() {
     }
 
     Alert.alert('Cuenta creada', 'Tu cuenta ha sido creada con exito.');
-    router.replace('/(tabs)');
+    // Al ser nuevo usuario, marcamos onboarding musical como pendiente (no tocamos el flag).
+    router.replace('/music-onboarding');
     setLoading(false);
   };
 

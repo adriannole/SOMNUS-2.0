@@ -16,6 +16,7 @@ import { useTheme } from '../hooks/useTheme';
 import { AnimatedBackground } from '../components/AnimatedBackground';
 import { createLoginStyles } from './styles/LoginScreen.styles';
 import { signIn } from '../backend/authService';
+import { getMusicOnboardingStatus } from '../backend/musicService';
 
 export default function LoginScreen() {
   const { theme, isDark, toggleTheme } = useTheme();
@@ -46,8 +47,14 @@ export default function LoginScreen() {
       return;
     }
 
+    const onboardingDone = await getMusicOnboardingStatus().catch(() => false);
+
     Alert.alert('Bienvenido', 'Inicio de sesión correcto');
-    router.replace('/(tabs)');
+    if (onboardingDone) {
+      router.replace('/(tabs)');
+    } else {
+      router.replace('/music-onboarding');
+    }
     setLoading(false);
   };
 
