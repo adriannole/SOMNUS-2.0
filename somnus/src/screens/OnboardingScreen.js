@@ -69,7 +69,7 @@ export default function OnboardingScreen() {
 
   const handleNext = () => {
     if (index === slides.length - 1) {
-      router.replace('/login');
+      router.push('/login');
       return;
     }
     fadeAnim.setValue(0);
@@ -78,7 +78,7 @@ export default function OnboardingScreen() {
     setIndex((prev) => prev + 1);
   };
 
-  const handleSkip = () => router.replace('/login');
+  const handleSkip = () => router.push('/login');
 
   const slide = slides[index];
 

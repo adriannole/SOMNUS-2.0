@@ -9,7 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, Link } from 'expo-router';
 import { useTheme } from '../hooks/useTheme';
 import { AnimatedBackground } from '../components/AnimatedBackground';
 import { createLoginStyles } from './styles/LoginScreen.styles';
@@ -131,9 +131,11 @@ export default function RegisterScreen() {
 
             <View style={styles.linkContainer}>
               <Text style={styles.linkText}>¿Ya tienes cuenta?</Text>
-              <TouchableOpacity onPress={() => router.replace('/login')}> 
-                <Text style={styles.linkButton}>Inicia sesión</Text>
-              </TouchableOpacity>
+              <Link href="/login" asChild>
+                <TouchableOpacity>
+                  <Text style={styles.linkButton}>Inicia sesión</Text>
+                </TouchableOpacity>
+              </Link>
             </View>
           </View>
         </View>
