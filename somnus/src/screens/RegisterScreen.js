@@ -130,7 +130,7 @@ export default function RegisterScreen() {
 
             <View style={styles.linkContainer}>
               <Text style={styles.linkText}>¿Ya tienes cuenta?</Text>
-              <TouchableOpacity onPress={() => router.replace('/')}> 
+              <TouchableOpacity onPress={() => router.replace('/login')}> 
                 <Text style={styles.linkButton}>Inicia sesión</Text>
               </TouchableOpacity>
             </View>
