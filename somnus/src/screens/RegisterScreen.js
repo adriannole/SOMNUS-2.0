@@ -34,14 +34,15 @@ export default function RegisterScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
-    >
+    <>
       <AnimatedBackground isDark={isDark} theme={theme} />
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
+      >
 
-      <TouchableOpacity style={styles.themeToggle} onPress={toggleTheme} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.themeToggle} onPress={toggleTheme} activeOpacity={0.7}>
         <View style={styles.iconContainer}>
           <Text style={styles.themeIcon}>{isDark ? '☀' : '✦'}</Text>
         </View>
@@ -137,6 +138,7 @@ export default function RegisterScreen() {
           </View>
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </>
   );
 }

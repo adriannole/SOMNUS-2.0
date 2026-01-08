@@ -4,7 +4,7 @@ export const createLoginStyles = (theme) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.BACKGROUND_COLOR,
+      backgroundColor: 'transparent',
       justifyContent: 'center',
       padding: 20,
       position: 'relative',

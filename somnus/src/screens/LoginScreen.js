@@ -30,18 +30,19 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
-    >
+    <>
       <AnimatedBackground isDark={isDark} theme={theme} />
-
-      <TouchableOpacity 
-        style={styles.themeToggle} 
-        onPress={toggleTheme}
-        activeOpacity={0.7}
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
       >
+
+        <TouchableOpacity 
+          style={styles.themeToggle} 
+          onPress={toggleTheme}
+          activeOpacity={0.7}
+        >
         {isDark ? (
           <View style={styles.iconContainer}>
             <Text style={styles.themeIcon}>☀</Text>
@@ -114,6 +115,7 @@ export default function LoginScreen() {
           </View>
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </>
   );
 }

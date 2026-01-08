@@ -6,6 +6,8 @@ import {
   Animated,
   Dimensions,
   StyleSheet,
+  Image,
+  SafeAreaView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../hooks/useTheme';
@@ -34,27 +36,36 @@ export default function OnboardingScreen() {
   const [index, setIndex] = useState(0);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.85)).current;
   const highlightAnim = useRef(new Animated.Value(0)).current;
+
 
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 600,
+        duration: 700,
         useNativeDriver: true,
       }),
-      Animated.timing(slideAnim, {
+      Animated.spring(slideAnim, {
         toValue: 0,
-        duration: 600,
+        friction: 8,
+        tension: 40,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 8,
+        tension: 35,
         useNativeDriver: true,
       }),
       Animated.timing(highlightAnim, {
         toValue: 1,
-        duration: 650,
+        duration: 750,
         useNativeDriver: true,
       }),
     ]).start();
-  }, [index, fadeAnim, slideAnim]);
+  }, [index, fadeAnim, slideAnim, scaleAnim]);
 
   const handleNext = () => {
     if (index === slides.length - 1) {
@@ -62,7 +73,8 @@ export default function OnboardingScreen() {
       return;
     }
     fadeAnim.setValue(0);
-    slideAnim.setValue(40);
+    slideAnim.setValue(80);
+    scaleAnim.setValue(0.85);
     setIndex((prev) => prev + 1);
   };
 
@@ -71,10 +83,12 @@ export default function OnboardingScreen() {
   const slide = slides[index];
 
   return (
-    <View style={styles.container}>
+    <>
       <AnimatedBackground isDark={true} theme={theme} />
+      <SafeAreaView style={styles.safeContainer}>
+        <View style={styles.container}>
 
-      <View style={styles.headerRow}>
+          <View style={styles.headerRow}>
         <TouchableOpacity onPress={handleSkip} activeOpacity={0.7}>
           <Text style={[styles.skipText, { color: theme.ACCENT_COLOR }]}>Saltar</Text>
         </TouchableOpacity>
@@ -89,35 +103,29 @@ export default function OnboardingScreen() {
               {
                 translateY: fadeAnim.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [20, 0],
+                  outputRange: [30, 0],
                 }),
               },
               {
                 translateX: slideAnim.interpolate({
-                  inputRange: [0, 40],
-                  outputRange: [0, -20],
+                  inputRange: [0, 80],
+                  outputRange: [0, -50],
                 }),
+              },
+              {
+                scale: scaleAnim,
               },
             ],
           }}
         >
-          <View
-            style={[
-              styles.illustrationContainer,
-              {
-                borderColor: theme.BORDER_COLOR,
-                backgroundColor: theme.SECONDARY_COLOR + '30',
-              },
-            ]}
-          >
+          <View style={styles.illustrationContainer}>
             <View style={[styles.illustrationCircle, { backgroundColor: theme.ACCENT_COLOR + '33' }]} />
-            <View
-              style={[
-                styles.illustrationCard,
-                { backgroundColor: theme.BACKGROUND_COLOR, borderColor: theme.BORDER_COLOR },
-              ]}
-            >
-              <Text style={[styles.illustrationText, { color: theme.TEXT_COLOR + '99' }]}>Espacio para tu imagen</Text>
+            <View style={styles.illustrationCard}>
+              <Image
+                source={require('../assets/ob1.webp')}
+                style={styles.illustrationImage}
+                resizeMode="contain"
+              />
             </View>
           </View>
           <Text style={[styles.badge, { color: theme.ACCENT_COLOR, borderColor: theme.ACCENT_COLOR }]}>
@@ -174,20 +182,29 @@ export default function OnboardingScreen() {
           <Text style={styles.nextText}>{index === slides.length - 1 ? 'Empezar' : 'Siguiente'}</Text>
         </TouchableOpacity>
       </View>
-    </View>
+        </View>
+      </SafeAreaView>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
+  safeContainer: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
   container: {
     flex: 1,
     position: 'relative',
     paddingHorizontal: 20,
-    paddingTop: 36,
-    paddingBottom: 32,
+    paddingTop: 28,
+    paddingBottom: 16,
+    backgroundColor: 'transparent',
   },
   headerRow: {
     alignItems: 'flex-end',
+    marginBottom: 24,
+    marginTop: 8,
   },
   contentWrapper: {
     flex: 1,
@@ -195,11 +212,11 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   illustrationContainer: {
-    height: 260,
+    height: 280,
     marginBottom: 28,
-    borderWidth: 1,
-    borderRadius: 22,
-    padding: 20,
+    borderWidth: 0,
+    borderRadius: 0,
+    padding: 0,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -213,23 +230,27 @@ const styles = StyleSheet.create({
     right: -30,
   },
   illustrationCard: {
-    width: '78%',
-    height: '78%',
-    borderRadius: 18,
-    borderWidth: 1,
+    width: '100%',
+    height: '100%',
+    borderRadius: 0,
+    borderWidth: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 14,
-    elevation: 8,
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
   },
   illustrationText: {
     fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',
     paddingHorizontal: 16,
+  },
+  illustrationImage: {
+    width: '100%',
+    height: '100%',
   },
   badge: {
     alignSelf: 'flex-start',
@@ -281,5 +302,7 @@ const styles = StyleSheet.create({
   skipText: {
     fontSize: 14,
     fontWeight: '600',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
   },
 });
