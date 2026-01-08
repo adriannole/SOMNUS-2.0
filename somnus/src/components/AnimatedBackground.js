@@ -5,18 +5,21 @@ const { width, height } = Dimensions.get('window');
 
 export function AnimatedBackground({ isDark, theme }) {
   const [particles, setParticles] = useState([]);
+  const [glowAnimation] = useState(new Animated.Value(0));
+  const [orbitAnimation] = useState(new Animated.Value(0));
 
   useEffect(() => {
-    // Generar partículas animadas
-    const newParticles = Array.from({ length: 15 }).map((_, i) => ({
+    // Generar partículas con diferentes velocidades y tamaños
+    const newParticles = Array.from({ length: 35 }).map((_, i) => ({
       id: i,
       initialX: Math.random() * width,
       initialY: Math.random() * height,
-      duration: 4000 + Math.random() * 4000,
-      delay: Math.random() * 1000,
-      size: 2 + Math.random() * 4,
-      opacity: 0.3 + Math.random() * 0.4,
+      duration: 6000 + Math.random() * 8000,
+      delay: Math.random() * 2000,
+      size: 1 + Math.random() * 5,
+      opacity: 0.4 + Math.random() * 0.6,
       animation: new Animated.Value(0),
+      intensity: 0.5 + Math.random() * 0.5,
     }));
 
     setParticles(newParticles);
@@ -34,23 +37,49 @@ export function AnimatedBackground({ isDark, theme }) {
         ])
       ).start();
     });
-  }, []);
+
+    // Animación de glow continuo
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowAnimation, {
+          toValue: 1,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(glowAnimation, {
+          toValue: 0,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // Animación de órbita
+    Animated.loop(
+      Animated.timing(orbitAnimation, {
+        toValue: 1,
+        duration: 10000,
+        useNativeDriver: true,
+      })
+    ).start();
+  }, [glowAnimation, orbitAnimation]);
 
   const getBackgroundColor = () => {
     return isDark ? theme.BACKGROUND_COLOR : theme.BACKGROUND_COLOR;
   };
 
-  const getGradientColors = () => {
-    if (isDark) {
-      return ['#1A1F26', '#2D3748', '#1F2937'];
-    } else {
-      return ['#F8F9FA', '#E8EEFB', '#F0F4FF'];
-    }
-  };
-
   const getParticleColor = () => {
     return isDark ? '#7C9EFF' : '#6B8AE3';
   };
+
+  const getGlowColor = () => {
+    return isDark ? '#7C9EFF' : '#6B8AE3';
+  };
+
+  const orbitRotation = orbitAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
 
   return (
     <View
@@ -67,17 +96,67 @@ export function AnimatedBackground({ isDark, theme }) {
         },
       ]}
     >
-      {/* Gradiente de fondo sutil */}
+      {/* Fondo base sutil */}
       <View
         style={{
           position: 'absolute',
           width: '100%',
           height: '100%',
-          backgroundColor: isDark ? '#1A1F26' : '#F8F9FA',
+          backgroundColor: isDark ? '#0F1419' : '#FAFBFD',
         }}
       />
 
-      {/* Partículas flotantes */}
+      {/* Círculos de glow animados - Superior */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          width: 400,
+          height: 400,
+          borderRadius: 200,
+          backgroundColor: getGlowColor(),
+          top: -150,
+          left: -150,
+          opacity: glowAnimation.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0.08, 0.15],
+          }),
+          transform: [
+            {
+              scale: glowAnimation.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0.8, 1.2],
+              }),
+            },
+          ],
+        }}
+      />
+
+      {/* Círculos de glow animados - Inferior */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          width: 350,
+          height: 350,
+          borderRadius: 175,
+          backgroundColor: getGlowColor(),
+          bottom: -120,
+          right: -120,
+          opacity: glowAnimation.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0.06, 0.12],
+          }),
+          transform: [
+            {
+              scale: glowAnimation.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0.9, 1.3],
+              }),
+            },
+          ],
+        }}
+      />
+
+      {/* Partículas flotantes brillantes */}
       {particles.map((particle) => (
         <Animated.View
           key={particle.id}
@@ -90,20 +169,33 @@ export function AnimatedBackground({ isDark, theme }) {
             left: particle.initialX,
             top: particle.initialY,
             opacity: particle.animation.interpolate({
-              inputRange: [0, 0.5, 1],
-              outputRange: [particle.opacity * 0.3, particle.opacity, particle.opacity * 0.3],
+              inputRange: [0, 0.3, 0.7, 1],
+              outputRange: [0, particle.opacity * particle.intensity, particle.opacity * particle.intensity, 0],
             }),
+            shadowColor: getGlowColor(),
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: particle.animation.interpolate({
+              inputRange: [0, 0.5, 1],
+              outputRange: [0, particle.intensity * 0.6, 0],
+            }),
+            shadowRadius: particle.size * 3,
             transform: [
               {
                 translateY: particle.animation.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [0, -height * 0.5],
+                  outputRange: [0, -height * 0.8],
                 }),
               },
               {
                 translateX: particle.animation.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0, Math.sin(particle.id) * 100],
+                  inputRange: [0, 0.25, 0.75, 1],
+                  outputRange: [0, Math.sin(particle.id) * 150, -Math.cos(particle.id) * 150, 0],
+                }),
+              },
+              {
+                scale: particle.animation.interpolate({
+                  inputRange: [0, 0.5, 1],
+                  outputRange: [0.5, 1, 0.5],
                 }),
               },
             ],
@@ -111,51 +203,92 @@ export function AnimatedBackground({ isDark, theme }) {
         />
       ))}
 
-      {/* Círculos decorativos sutiles */}
-      <View
+      {/* Órbita animada - Línea decorativa */}
+      <Animated.View
         style={{
           position: 'absolute',
-          width: 300,
-          height: 300,
-          borderRadius: 150,
-          backgroundColor: isDark ? '#7C9EFF' : '#6B8AE3',
-          opacity: isDark ? 0.05 : 0.08,
-          top: -100,
-          left: -100,
-        }}
-      />
-      <View
-        style={{
-          position: 'absolute',
-          width: 250,
-          height: 250,
-          borderRadius: 125,
-          backgroundColor: isDark ? '#7C9EFF' : '#6B8AE3',
-          opacity: isDark ? 0.04 : 0.06,
-          bottom: -80,
-          right: -80,
+          width: 280,
+          height: 280,
+          borderRadius: 140,
+          borderWidth: 1,
+          borderColor: getGlowColor(),
+          opacity: isDark ? 0.15 : 0.2,
+          top: '50%',
+          left: '50%',
+          marginTop: -140,
+          marginLeft: -140,
+          transform: [
+            {
+              rotate: orbitRotation,
+            },
+          ],
         }}
       />
 
-      {/* Líneas decorativas animadas */}
+      {/* Punto brillante en órbita */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          width: 8,
+          height: 8,
+          borderRadius: 4,
+          backgroundColor: getGlowColor(),
+          top: '50%',
+          left: '50%',
+          marginTop: -4,
+          marginLeft: -4,
+          opacity: isDark ? 0.6 : 0.8,
+          transform: [
+            {
+              translateX: Animated.multiply(
+                orbitAnimation.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, 1],
+                }),
+                140
+              ),
+            },
+            {
+              rotate: orbitRotation,
+            },
+          ],
+        }}
+      />
+
+      {/* Líneas horizontales animadas */}
+      {/* Removidas - no se ven bien */}
+
+      {/* Puntos de luz estratégicos */}
       <View
         style={{
           position: 'absolute',
-          width: '100%',
-          height: 1,
-          backgroundColor: isDark ? '#7C9EFF' : '#6B8AE3',
-          opacity: isDark ? 0.1 : 0.15,
-          top: height * 0.25,
+          width: 6,
+          height: 6,
+          borderRadius: 3,
+          backgroundColor: getParticleColor(),
+          opacity: isDark ? 0.5 : 0.6,
+          top: '25%',
+          right: '10%',
+          shadowColor: getGlowColor(),
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: isDark ? 0.5 : 0.4,
+          shadowRadius: 8,
         }}
       />
       <View
         style={{
           position: 'absolute',
-          width: '100%',
-          height: 1,
-          backgroundColor: isDark ? '#7C9EFF' : '#6B8AE3',
-          opacity: isDark ? 0.08 : 0.1,
-          top: height * 0.75,
+          width: 4,
+          height: 4,
+          borderRadius: 2,
+          backgroundColor: getParticleColor(),
+          opacity: isDark ? 0.4 : 0.5,
+          top: '70%',
+          left: '8%',
+          shadowColor: getGlowColor(),
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: isDark ? 0.4 : 0.3,
+          shadowRadius: 6,
         }}
       />
     </View>

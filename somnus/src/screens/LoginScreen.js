@@ -31,8 +31,20 @@ export default function LoginScreen() {
       <AnimatedBackground isDark={isDark} theme={theme} />
 
       {/* BOTÓN TOGGLE TEMA */}
-      <TouchableOpacity style={styles.themeToggle} onPress={toggleTheme}>
-        <Text style={styles.themeToggleText}>{isDark ? '☀️' : '🌙'}</Text>
+      <TouchableOpacity 
+        style={styles.themeToggle} 
+        onPress={toggleTheme}
+        activeOpacity={0.7}
+      >
+        {isDark ? (
+          <View style={styles.iconContainer}>
+            <Text style={styles.themeIcon}>☀</Text>
+          </View>
+        ) : (
+          <View style={styles.iconContainer}>
+            <Text style={styles.themeIcon}>✦</Text>
+          </View>
+        )}
       </TouchableOpacity>
 
       {/* CONTENIDO PRINCIPAL */}
