@@ -1,9 +1,6 @@
 import React from 'react';
-// El "../" sirve para salir de la carpeta 'app' y buscar 'src'
-import LoginScreen from '../../src/screens/LoginScreen'; 
+import HomeScreen from '../../src/screens/HomeScreen';
 
 export default function Page() {
-  return (
-      <LoginScreen />
-  );
+  return <HomeScreen />;
 }
