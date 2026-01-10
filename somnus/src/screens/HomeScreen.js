@@ -56,8 +56,12 @@ export default function HomeScreen() {
   const loadSleepData = async () => {
     setLoading(true);
     try {
+      console.log('[HomeScreen] 📂 Loading sleep data...');
       const latest = await sleepTracker.getLatestSession();
       const weekData = await sleepTracker.getWeekData();
+
+      console.log('[HomeScreen] ✅ Latest session:', latest);
+      console.log('[HomeScreen] 📊 Week data:', weekData);
 
       if (latest) {
         setSleepData({
@@ -68,6 +72,7 @@ export default function HomeScreen() {
           weekData: weekData.length > 0 ? weekData : generateDefaultWeekData(),
         });
       } else {
+        console.log('[HomeScreen] ℹ️ No previous sessions found, showing empty data');
         // Datos de demo si no hay sesiones
         setSleepData({
           score: 0,
@@ -78,7 +83,7 @@ export default function HomeScreen() {
         });
       }
     } catch (error) {
-      console.error('[HomeScreen] Error loading data:', error);
+      console.error('[HomeScreen] ❌ Error loading data:', error);
     } finally {
       setLoading(false);
     }
@@ -96,23 +101,29 @@ export default function HomeScreen() {
 
   const handleStartTracking = async () => {
     try {
+      console.log('[HomeScreen] 🌙 User pressed START TRACKING');
       await sleepTracker.startTracking();
       setIsTracking(true);
+      console.log('[HomeScreen] ✅ Tracking started successfully');
       Alert.alert(
         'Tracking iniciado',
         'El seguimiento de sueño está activo. Deja tu celular cerca y descansa.',
         [{ text: 'Ok' }]
       );
     } catch (error) {
+      console.error('[HomeScreen] ❌ Error starting tracking:', error);
       Alert.alert('Error', 'No se pudo iniciar el tracking: ' + error.message);
     }
   };
 
   const handleStopTracking = async () => {
     try {
+      console.log('[HomeScreen] ⏹️ User pressed STOP TRACKING');
       const result = await sleepTracker.stopTracking();
       await sleepTracker.saveSleepSession(result);
       setIsTracking(false);
+      
+      console.log('[HomeScreen] 📊 Tracking stopped. Results:', result);
       
       Alert.alert(
         '¡Sesión completada!',
@@ -127,6 +138,7 @@ export default function HomeScreen() {
       
       loadSleepData();
     } catch (error) {
+      console.error('[HomeScreen] ❌ Error stopping tracking:', error);
       Alert.alert('Error', 'No se pudo detener el tracking: ' + error.message);
     }
   };
