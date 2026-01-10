@@ -35,13 +35,28 @@ export default function HomeScreen() {
   const [sleepData, setSleepData] = useState(null);
   const [isTracking, setIsTracking] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [trackingMode, setTrackingMode] = useState('auto'); // 'auto' o 'manual'
 
   const scoreAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     loadSleepData();
     checkTrackingStatus();
-  }, []);
+    
+    // Iniciar monitoreo de inactividad SOLO si está en modo auto
+    if (trackingMode === 'auto') {
+      console.log('[HomeScreen] 🚀 Initializing auto-tracking monitor...');
+      sleepTracker.startInactivityMonitoring();
+    } else {
+      // Si cambió a manual, detener auto-tracking
+      sleepTracker.stopInactivityMonitoring();
+    }
+    
+    // Limpiar cuando desmonte
+    return () => {
+      sleepTracker.stopInactivityMonitoring();
+    };
+  }, [trackingMode]);
 
   useEffect(() => {
     if (sleepData) {
@@ -101,7 +116,7 @@ export default function HomeScreen() {
 
   const handleStartTracking = async () => {
     try {
-      console.log('[HomeScreen] 🌙 User pressed START TRACKING');
+      console.log('[HomeScreen] 🌙 User pressed START TRACKING (manual mode)');
       await sleepTracker.startTracking();
       setIsTracking(true);
       console.log('[HomeScreen] ✅ Tracking started successfully');
@@ -140,21 +155,6 @@ export default function HomeScreen() {
     } catch (error) {
       console.error('[HomeScreen] ❌ Error stopping tracking:', error);
       Alert.alert('Error', 'No se pudo detener el tracking: ' + error.message);
-    }
-  };
-
-  const toggleTracking = () => {
-    if (isTracking) {
-      Alert.alert(
-        'Detener tracking',
-        '¿Terminar la sesión de sueño?',
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Detener', onPress: handleStopTracking, style: 'destructive' },
-        ]
-      );
-    } else {
-      handleStartTracking();
     }
   };
 
@@ -346,22 +346,54 @@ export default function HomeScreen() {
           <ClockIcon size={20} color={theme.TEXT_COLOR} />
         </TouchableOpacity>
 
-        {/* Botón Play/Stop (para tracking) */}
-        <TouchableOpacity 
-          style={[styles.playButton, isTracking && styles.playButtonActive]} 
-          onPress={toggleTracking}
-        >
-          {isTracking ? (
-            <StopIcon size={28} color={isDark ? '#0b1220' : '#fff'} />
+        {/* Selector de Modo de Tracking (Auto vs Manual) */}
+        <View style={styles.modeSelector}>
+          <TouchableOpacity 
+            style={[styles.modeButton, trackingMode === 'auto' && styles.modeButtonActive]}
+            onPress={() => setTrackingMode('auto')}
+          >
+            <Text style={[styles.modeButtonText, trackingMode === 'auto' && styles.modeButtonTextActive]}>
+              Automático
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.modeButton, trackingMode === 'manual' && styles.modeButtonActive]}
+            onPress={() => setTrackingMode('manual')}
+          >
+            <Text style={[styles.modeButtonText, trackingMode === 'manual' && styles.modeButtonTextActive]}>
+              Manual
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Control según el modo */}
+        {trackingMode === 'auto' ? (
+          // Modo Auto-Tracking - Solo indicador
+          isTracking ? (
+            <View style={styles.autoTrackingIndicator}>
+              <View style={styles.pulsingDot} />
+              <Text style={styles.autoTrackingText}>Tracking Activo</Text>
+            </View>
           ) : (
-            <PlayIcon size={28} color={isDark ? '#0b1220' : '#fff'} />
-          )}
-        </TouchableOpacity>
-        {isTracking && (
-          <Text style={styles.trackingText}>Tracking activo...</Text>
+            <View style={styles.autoTrackingIndicator}>
+              <View style={[styles.pulsingDot, { backgroundColor: '#9ca3af' }]} />
+              <Text style={styles.autoTrackingText}>Esperando inicio automático...</Text>
+            </View>
+          )
+        ) : (
+          // Modo Manual - Botón Play/Stop profesional
+          <TouchableOpacity 
+            style={[styles.playButton, isTracking && styles.playButtonActive]} 
+            onPress={isTracking ? handleStopTracking : handleStartTracking}
+          >
+            <Text style={styles.playButtonText}>
+              {isTracking ? 'DETENER' : 'INICIAR'}
+            </Text>
+          </TouchableOpacity>
         )}
 
-        {/* Gráfica semanal */}
+        {/* Indicador / Control según el modo */}
         <View style={styles.weekSection}>
           {renderWeekChart()}
         </View>
@@ -650,6 +682,94 @@ function createStyles(theme, isDark) {
       color: '#f87171',
       fontSize: 16,
       fontWeight: '600',
+    },
+
+    // Mode Selector (Auto vs Manual)
+    modeSelector: {
+      marginVertical: 12,
+      marginHorizontal: 16,
+      flexDirection: 'row',
+      gap: 10,
+    },
+    modeButton: {
+      flex: 1,
+      paddingVertical: 12,
+      paddingHorizontal: 14,
+      borderRadius: 10,
+      backgroundColor: isDark ? '#1a1f26' : '#f3f4f6',
+      borderWidth: 1.5,
+      borderColor: theme.BORDER_COLOR,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    modeButtonActive: {
+      backgroundColor: theme.ACCENT_COLOR,
+      borderColor: theme.ACCENT_COLOR,
+    },
+    modeButtonText: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: theme.TEXT_COLOR,
+      letterSpacing: 0.5,
+    },
+    modeButtonTextActive: {
+      color: isDark ? '#0b1220' : '#fff',
+    },
+
+    // Play Button (Manual Mode)
+    playButton: {
+      marginVertical: 16,
+      marginHorizontal: 16,
+      height: 56,
+      borderRadius: 12,
+      backgroundColor: theme.ACCENT_COLOR,
+      justifyContent: 'center',
+      alignItems: 'center',
+      shadowColor: theme.ACCENT_COLOR,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 12,
+      elevation: 8,
+    },
+    playButtonActive: {
+      backgroundColor: '#ef4444',
+    },
+    playButtonText: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: isDark ? '#0b1220' : '#fff',
+      letterSpacing: 1,
+    },
+
+    // Auto-Tracking Indicator
+    autoTrackingIndicator: {
+      marginVertical: 16,
+      marginHorizontal: 16,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      backgroundColor: isDark ? '#1a1f26' : '#f3f4f6',
+      borderRadius: 12,
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: theme.ACCENT_COLOR + '40',
+    },
+    pulsingDot: {
+      width: 12,
+      height: 12,
+      borderRadius: 6,
+      backgroundColor: theme.ACCENT_COLOR,
+      marginRight: 12,
+      shadowColor: theme.ACCENT_COLOR,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.6,
+      shadowRadius: 6,
+      elevation: 4,
+    },
+    autoTrackingText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: theme.TEXT_COLOR,
     },
   });
 }
