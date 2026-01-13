@@ -24,12 +24,14 @@ import {
   ChartIcon,
   SettingsIcon,
   MenuIcon,
+  SunIcon,
+  MoonIconDark,
 } from '../components/Icons';
 
 const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
-  const { theme, isDark } = useTheme();
+  const { theme, isDark, toggleTheme } = useTheme();
   const styles = createStyles(theme, isDark);
 
   const [sleepData, setSleepData] = useState(null);
@@ -296,10 +298,24 @@ export default function HomeScreen() {
         {/* Header con título y botón de recomendaciones */}
         <View style={styles.header}>
           <Text style={styles.title}>Home</Text>
-          <TouchableOpacity style={styles.recommendationsButton}>
-            <MenuIcon size={16} color={theme.TEXT_COLOR} />
-            <Text style={styles.recommendationsText}>Recommendations</Text>
-          </TouchableOpacity>
+          <View style={styles.headerRightSection}>
+            <TouchableOpacity style={styles.recommendationsButton}>
+              <MenuIcon size={16} color={theme.TEXT_COLOR} />
+              <Text style={styles.recommendationsText}>Recommendations</Text>
+            </TouchableOpacity>
+            
+            {/* Toggle Modo Oscuro/Claro */}
+            <TouchableOpacity 
+              style={styles.themeToggle}
+              onPress={toggleTheme}
+            >
+              {isDark ? (
+                <SunIcon size={18} color={theme.TEXT_COLOR} />
+              ) : (
+                <MoonIconDark size={18} color={theme.TEXT_COLOR} />
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Score circular */}
@@ -428,6 +444,11 @@ function createStyles(theme, isDark) {
       paddingTop: 50,
       paddingBottom: 20,
     },
+    headerRightSection: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
     title: {
       fontSize: 32,
       fontWeight: '800',
@@ -448,6 +469,16 @@ function createStyles(theme, isDark) {
       fontSize: 12,
       fontWeight: '600',
       color: theme.TEXT_COLOR,
+    },
+    themeToggle: {
+      width: 40,
+      height: 40,
+      borderRadius: 10,
+      backgroundColor: theme.SECONDARY_COLOR,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: theme.BORDER_COLOR,
     },
 
     // Score circular

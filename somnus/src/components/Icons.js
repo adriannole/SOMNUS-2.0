@@ -117,3 +117,28 @@ export const MenuIcon = ({ size = 24, color = '#fff' }) => (
     <Path d="M3 12h18M3 6h18M3 18h18" stroke={color} strokeWidth="2" strokeLinecap="round" />
   </Svg>
 );
+
+export const SunIcon = ({ size = 24, color = '#fff' }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="5" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Path
+      d="M12 1v6m0 6v6M23 12h-6m-6 0H5M20.49 3.51l-4.24 4.24m5.66 5.66l4.24 4.24M3.51 3.51l4.24 4.24m5.66 5.66l-4.24 4.24"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+  </Svg>
+);
+
+export const MoonIconDark = ({ size = 24, color = '#fff' }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      fill={color}
+    />
+  </Svg>
+);
