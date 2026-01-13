@@ -10,6 +10,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../hooks/useTheme';
 import SleepHeatmap from '../components/SleepHeatmap';
 import SleepTimelineChart from '../components/SleepTimelineChart';
@@ -23,6 +24,15 @@ export default function StatisticsScreen() {
   const [selectedDay, setSelectedDay] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth()); // 0-11
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
+  // Recargar datos cuando la pantalla gana foco (detecta cuando se borran datos)
+  useFocusEffect(
+    React.useCallback(() => {
+      loadSleepData();
+    }, [])
+  );
 
   useEffect(() => {
     loadSleepData();
@@ -36,6 +46,8 @@ export default function StatisticsScreen() {
         const sessions = JSON.parse(data);
         setSleepData(sessions);
         console.log('[Stats] Loaded', sessions.length, 'sleep sessions');
+      } else {
+        setSleepData([]);
       }
     } catch (error) {
       console.error('[Stats] Error loading data:', error);
@@ -48,6 +60,90 @@ export default function StatisticsScreen() {
     setSelectedDay(dayData);
     setShowDetailModal(true);
   };
+
+  // Filtrar datos por mes seleccionado
+  const filteredData = useMemo(() => {
+    return sleepData.filter(session => {
+      const sessionDate = new Date(session.date);
+      return sessionDate.getMonth() === selectedMonth && 
+             sessionDate.getFullYear() === selectedYear;
+    });
+  }, [sleepData, selectedMonth, selectedYear]);
+
+  const getMonthName = (monthIndex) => {
+    const months = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    return months[monthIndex];
+  };
+
+  const handlePreviousMonth = () => {
+    if (selectedMonth === 0) {
+      setSelectedMonth(11);
+      setSelectedYear(selectedYear - 1);
+    } else {
+      setSelectedMonth(selectedMonth - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    
+    // No permitir ir al futuro
+    if (selectedYear === currentYear && selectedMonth === currentMonth) {
+      return;
+    }
+    
+    if (selectedMonth === 11) {
+      setSelectedMonth(0);
+      setSelectedYear(selectedYear + 1);
+    } else {
+      setSelectedMonth(selectedMonth + 1);
+    }
+  };
+
+  const isCurrentMonth = () => {
+    const now = new Date();
+    return selectedMonth === now.getMonth() && selectedYear === now.getFullYear();
+  };
+
+  // Calcular estadísticas del mes seleccionado
+  const avgScore = filteredData.length > 0
+    ? Math.round(filteredData.reduce((sum, s) => sum + s.score, 0) / filteredData.length)
+    : 0;
+
+  const avgHours = filteredData.length > 0
+    ? (filteredData.reduce((sum, s) => sum + s.hoursSlept, 0) / filteredData.length).toFixed(1)
+    : 0;
+
+  const excellentDays = filteredData.filter(s => s.score >= 80).length;
+
+  const getScoreColor = (score) => {
+    if (score >= 80) return '#4CAF50'; // Verde
+    if (score >= 60) return '#FFB74D'; // Amarillo/Naranja
+    return '#FF6B6B'; // Rojo
+  };
+
+  // Calcular horas de pickups para mostrar en texto
+  const pickupTimes = useMemo(() => {
+    if (!selectedDay || !selectedDay.startTime || !selectedDay.endTime || !selectedDay.nighttimePickups) {
+      return [];
+    }
+    const start = new Date(selectedDay.startTime);
+    const end = new Date(selectedDay.endTime);
+    const totalHours = (end - start) / (1000 * 60 * 60);
+    if (totalHours <= 0 || selectedDay.nighttimePickups <= 0) return [];
+    const interval = totalHours / (selectedDay.nighttimePickups + 1);
+    const results = [];
+    for (let i = 1; i <= selectedDay.nighttimePickups; i++) {
+      const t = new Date(start.getTime() + interval * i * 60 * 60 * 1000);
+      results.push(t.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }));
+    }
+    return results;
+  }, [selectedDay]);
 
   const styles = StyleSheet.create({
     container: {
@@ -65,12 +161,6 @@ export default function StatisticsScreen() {
       marginBottom: 8,
       paddingHorizontal: 16,
       paddingTop: 32,
-    },
-    subtitle: {
-      fontSize: 14,
-      color: theme.TEXT_COLOR + '99',
-      marginBottom: 24,
-      paddingHorizontal: 16,
     },
     heatmapSection: {
       marginBottom: 32,
@@ -175,42 +265,41 @@ export default function StatisticsScreen() {
       textAlign: 'center',
       marginTop: 20,
     },
+    monthSelector: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      marginBottom: 20,
+      gap: 12,
+    },
+    monthButton: {
+      padding: 8,
+      borderRadius: 8,
+      backgroundColor: theme.SECONDARY_COLOR,
+      borderWidth: 1,
+      borderColor: theme.BORDER_COLOR,
+    },
+    monthButtonDisabled: {
+      opacity: 0.3,
+    },
+    monthText: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: theme.TEXT_COLOR,
+      flex: 1,
+      textAlign: 'center',
+    },
+    emptyState: {
+      padding: 40,
+      alignItems: 'center',
+    },
+    emptyStateText: {
+      fontSize: 16,
+      color: theme.TEXT_COLOR + '99',
+      textAlign: 'center',
+    },
   });
-
-  // Calcular estadísticas generales
-  const avgScore = sleepData.length > 0
-    ? Math.round(sleepData.reduce((sum, s) => sum + s.score, 0) / sleepData.length)
-    : 0;
-
-  const avgHours = sleepData.length > 0
-    ? (sleepData.reduce((sum, s) => sum + s.hoursSlept, 0) / sleepData.length).toFixed(1)
-    : 0;
-
-  const excellentDays = sleepData.filter(s => s.score >= 80).length;
-
-  const getScoreColor = (score) => {
-    if (score >= 80) return '#4CAF50'; // Verde
-    if (score >= 60) return '#FFB74D'; // Amarillo/Naranja
-    return '#FF6B6B'; // Rojo
-  };
-
-  // Calcular horas de pickups para mostrar en texto
-  const pickupTimes = useMemo(() => {
-    if (!selectedDay || !selectedDay.startTime || !selectedDay.endTime || !selectedDay.nighttimePickups) {
-      return [];
-    }
-    const start = new Date(selectedDay.startTime);
-    const end = new Date(selectedDay.endTime);
-    const totalHours = (end - start) / (1000 * 60 * 60);
-    if (totalHours <= 0 || selectedDay.nighttimePickups <= 0) return [];
-    const interval = totalHours / (selectedDay.nighttimePickups + 1);
-    const results = [];
-    for (let i = 1; i <= selectedDay.nighttimePickups; i++) {
-      const t = new Date(start.getTime() + interval * i * 60 * 60 * 1000);
-      results.push(t.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }));
-    }
-    return results;
-  }, [selectedDay]);
 
   if (loading) {
     return (
@@ -226,39 +315,72 @@ export default function StatisticsScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <Text style={styles.header}>Estadísticas</Text>
-        <Text style={styles.subtitle}>Últimos 30 días</Text>
+        
+        {/* Selector de mes */}
+        <View style={styles.monthSelector}>
+          <TouchableOpacity 
+            style={styles.monthButton}
+            onPress={handlePreviousMonth}
+          >
+            <Text style={{ color: theme.TEXT_COLOR, fontSize: 20 }}>‹</Text>
+          </TouchableOpacity>
+          
+          <Text style={styles.monthText}>
+            {getMonthName(selectedMonth)} {selectedYear}
+          </Text>
+          
+          <TouchableOpacity 
+            style={[styles.monthButton, isCurrentMonth() && styles.monthButtonDisabled]}
+            onPress={handleNextMonth}
+            disabled={isCurrentMonth()}
+          >
+            <Text style={{ color: theme.TEXT_COLOR, fontSize: 20 }}>›</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Heatmap */}
-        <View style={styles.heatmapSection}>
-          <Text style={styles.sectionTitle}>Night Score</Text>
-          <SleepHeatmap 
-            data={sleepData} 
-            onDayPress={handleDayPress}
-          />
-        </View>
+        {filteredData.length > 0 ? (
+          <View style={styles.heatmapSection}>
+            <Text style={styles.sectionTitle}>Night Score</Text>
+            <SleepHeatmap 
+              data={filteredData} 
+              onDayPress={handleDayPress}
+            />
+          </View>
+        ) : (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>
+              No hay datos de sueño para {getMonthName(selectedMonth)} {selectedYear}
+            </Text>
+          </View>
+        )}
 
         {/* Stats Summary */}
-        <Text style={styles.sectionTitle}>Resumen</Text>
-        <View style={styles.statsGrid}>
-          <View style={styles.statCard}>
-            <Text style={[styles.statValue, { color: getScoreColor(avgScore) }]}>
-              {avgScore}
-            </Text>
-            <Text style={styles.statLabel}>Score Promedio</Text>
-          </View>
+        {filteredData.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>Resumen</Text>
+            <View style={styles.statsGrid}>
+              <View style={styles.statCard}>
+                <Text style={[styles.statValue, { color: getScoreColor(avgScore) }]}>
+                  {avgScore}
+                </Text>
+                <Text style={styles.statLabel}>Score Promedio</Text>
+              </View>
 
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{avgHours}h</Text>
-            <Text style={styles.statLabel}>Horas Promedio</Text>
-          </View>
+              <View style={styles.statCard}>
+                <Text style={styles.statValue}>{avgHours}h</Text>
+                <Text style={styles.statLabel}>Horas Promedio</Text>
+              </View>
 
-          <View style={styles.statCard}>
-            <Text style={[styles.statValue, { color: '#4CAF50' }]}>
-              {excellentDays}
-            </Text>
-            <Text style={styles.statLabel}>Noches Excelentes</Text>
-          </View>
-        </View>
+              <View style={styles.statCard}>
+                <Text style={[styles.statValue, { color: '#4CAF50' }]}>
+                  {excellentDays}
+                </Text>
+                <Text style={styles.statLabel}>Noches Excelentes</Text>
+              </View>
+            </View>
+          </>
+        )}
 
         <View style={{ height: 80 }} />
       </ScrollView>
