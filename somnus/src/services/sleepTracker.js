@@ -230,7 +230,7 @@ class SleepTracker {
     
     // Asegurar que result siempre es un objeto válido
     if (!result) {
-      console.log('[SleepTracker]  ❌ No session data available');
+      console.log('[SleepTracker]   No session data available');
       return {
         score: 0,
         hoursSlept: 0,
