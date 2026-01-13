@@ -62,7 +62,7 @@ class SleepTracker {
         this.magnitudeHistory = [magnitude, magnitude, magnitude, magnitude, magnitude];
         this.lastMagnitude = magnitude;
         firstReading = false;
-        console.log(`[SleepTracker] 🔧 Initialized with magnitude: ${magnitude.toFixed(2)}`);
+        console.log(`[SleepTracker]  Initialized with magnitude: ${magnitude.toFixed(2)}`);
         return;  // No procesar la primera lectura
       }
       

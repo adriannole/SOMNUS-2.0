@@ -120,13 +120,24 @@ export const MenuIcon = ({ size = 24, color = '#fff' }) => (
 
 export const SunIcon = ({ size = 24, color = '#fff' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Circle cx="12" cy="12" r="5" stroke={color} strokeWidth="2" strokeLinecap="round" />
-    <Path
-      d="M12 1v6m0 6v6M23 12h-6m-6 0H5M20.49 3.51l-4.24 4.24m5.66 5.66l4.24 4.24M3.51 3.51l4.24 4.24m5.66 5.66l-4.24 4.24"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-    />
+    {/* Rayo superior */}
+    <Path d="M12 2 L14 8 L10 8 Z" fill={color} />
+    {/* Rayo superior derecha */}
+    <Path d="M18.5 5.5 L15.5 10 L12.5 7 Z" fill={color} />
+    {/* Rayo derecha */}
+    <Path d="M22 12 L16 14 L16 10 Z" fill={color} />
+    {/* Rayo inferior derecha */}
+    <Path d="M18.5 18.5 L12.5 17 L15.5 14 Z" fill={color} />
+    {/* Rayo inferior */}
+    <Path d="M12 22 L10 16 L14 16 Z" fill={color} />
+    {/* Rayo inferior izquierda */}
+    <Path d="M5.5 18.5 L8.5 14 L11.5 17 Z" fill={color} />
+    {/* Rayo izquierda */}
+    <Path d="M2 12 L8 10 L8 14 Z" fill={color} />
+    {/* Rayo superior izquierda */}
+    <Path d="M5.5 5.5 L11.5 7 L8.5 10 Z" fill={color} />
+    {/* Círculo central */}
+    <Circle cx="12" cy="12" r="5.5" fill={color} />
   </Svg>
 );
 
