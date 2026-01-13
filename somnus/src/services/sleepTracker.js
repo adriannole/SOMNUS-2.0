@@ -427,12 +427,12 @@ class SleepTracker {
   // ==================== DATOS DE PRUEBA ====================
   async generateTestData() {
     try {
-      console.log('[SleepTracker] 🎲 Generating test data for the week...');
+      console.log('[SleepTracker] 🎲 Generating test data for 30 days...');
       
       const testSessions = [];
       
-      // Generar datos para los últimos 7 días
-      for (let i = 6; i >= 0; i--) {
+      // Generar datos para los últimos 30 días
+      for (let i = 29; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
         date.setHours(23, 0, 0, 0); // Simular que terminó a las 11 PM

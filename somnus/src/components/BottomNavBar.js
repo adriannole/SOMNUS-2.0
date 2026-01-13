@@ -1,0 +1,104 @@
+import React from 'react';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useTheme } from '../hooks/useTheme';
+import { ChartIcon, MusicIcon, SettingsIcon, HomeIconNav } from './Icons';
+
+export default function BottomNavBar({ activeTab = 'home', isDark }) {
+  const router = useRouter();
+  const { theme } = useTheme();
+
+  const handleNavigation = (tab) => {
+    switch (tab) {
+      case 'explore':
+        router.push('/(tabs)/explore');
+        break;
+      case 'music':
+        router.push('/(tabs)/music');
+        break;
+      case 'home':
+        router.push('/(tabs)');
+        break;
+      case 'settings':
+        // router.push('/settings');
+        break;
+      default:
+        break;
+    }
+  };
+
+  const styles = StyleSheet.create({
+    navBar: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      alignItems: 'center',
+      paddingVertical: 8,
+      paddingBottom: 12,
+      backgroundColor: isDark ? '#1a1f26f0' : '#fffffff0',
+      borderTopWidth: 1,
+      borderTopColor: theme.BORDER_COLOR,
+      height: 64,
+    },
+    navButton: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'transparent',
+    },
+    navButtonActive: {
+      backgroundColor: theme.ACCENT_COLOR,
+      shadowColor: theme.ACCENT_COLOR,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.4,
+      shadowRadius: 16,
+      elevation: 8,
+    },
+  });
+
+  return (
+    <View style={styles.navBar}>
+      <TouchableOpacity 
+        style={styles.navButton}
+        onPress={() => handleNavigation('explore')}
+      >
+        <ChartIcon 
+          size={24} 
+          color={activeTab === 'explore' ? theme.ACCENT_COLOR : theme.TEXT_COLOR + '99'} 
+        />
+      </TouchableOpacity>
+      
+      <TouchableOpacity 
+        style={styles.navButton}
+        onPress={() => handleNavigation('music')}
+      >
+        <MusicIcon 
+          size={24} 
+          color={activeTab === 'music' ? theme.ACCENT_COLOR : theme.TEXT_COLOR + '99'} 
+        />
+      </TouchableOpacity>
+      
+      <TouchableOpacity 
+        style={[styles.navButton, activeTab === 'home' && styles.navButtonActive]}
+        onPress={() => handleNavigation('home')}
+      >
+        <HomeIconNav 
+          size={26} 
+          color={activeTab === 'home' ? (isDark ? '#0b1220' : '#fff') : (theme.TEXT_COLOR + '99')} 
+        />
+      </TouchableOpacity>
+      
+      <TouchableOpacity style={styles.navButton}>
+        <SettingsIcon 
+          size={24} 
+          color={theme.TEXT_COLOR + '99'} 
+        />
+      </TouchableOpacity>
+    </View>
+  );
+}

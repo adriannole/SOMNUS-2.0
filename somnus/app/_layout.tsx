@@ -38,7 +38,6 @@ export default function RootLayout() {
             headerShown: false,
             contentStyle: { backgroundColor },
             animation: 'slide_from_right',
-            detachPreviousScreen: false,
             gestureEnabled: true,
             gestureDirection: 'horizontal',
             fullScreenGestureEnabled: true,
