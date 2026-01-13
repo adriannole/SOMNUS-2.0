@@ -98,6 +98,19 @@ export default function SleepTimelineChart({
     .map((p) => `${getXCoordinate(p.time)},${getYCoordinate(p.value)}`)
     .join(' ');
 
+  const segments = useMemo(() => {
+    if (!points.length) return [];
+    const sorted = [...points].sort((a, b) => a.time - b.time);
+    const segs = [];
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const curr = sorted[i];
+      const next = sorted[i + 1];
+      const type = curr.value === 1 ? 'sleep' : 'awake';
+      segs.push({ start: curr.time, end: next.time, type });
+    }
+    return segs;
+  }, [points]);
+
   const styles = StyleSheet.create({
     container: {
       marginVertical: 16,
@@ -113,23 +126,6 @@ export default function SleepTimelineChart({
     svgContainer: {
       alignItems: 'center',
       justifyContent: 'center',
-    },
-    labelsRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      paddingHorizontal: PADDING,
-      marginBottom: 8,
-      marginTop: 8,
-    },
-    label: {
-      fontSize: 11,
-      color: theme.TEXT_COLOR + '99',
-    },
-    axisLabel: {
-      fontSize: 10,
-      color: theme.TEXT_COLOR + '99',
-      marginTop: 4,
-      marginBottom: 4,
     },
     timeLabels: {
       flexDirection: 'row',
@@ -161,7 +157,7 @@ export default function SleepTimelineChart({
     },
     legendLabel: {
       fontSize: 12,
-      color: theme.TEXT_SECONDARY,
+      color: theme.TEXT_COLOR + '99',
     },
     statRow: {
       flexDirection: 'row',
@@ -169,7 +165,7 @@ export default function SleepTimelineChart({
       marginTop: 12,
       paddingTop: 12,
       borderTopWidth: 1,
-      borderTopColor: 'rgba(255, 255, 255, 0.1)',
+      borderTopColor: theme.BORDER_COLOR,
     },
     statItem: {
       flexDirection: 'row',
@@ -177,26 +173,18 @@ export default function SleepTimelineChart({
     },
     statLabel: {
       fontSize: 12,
-      color: theme.TEXT_SECONDARY,
+      color: theme.TEXT_COLOR + '99',
     },
     statValue: {
       fontSize: 12,
       fontWeight: 'bold',
-      color: theme.TEXT_PRIMARY,
+      color: theme.ACCENT_COLOR,
     },
   });
 
   return (
     <View style={styles.container}>
       <View style={styles.chartContainer}>
-        {/* Axis labels */}
-        <View style={{ flexDirection: 'row', marginBottom: 8 }}>
-          <View style={{ width: PADDING }}>
-            <Text style={[styles.axisLabel, { textAlign: 'right' }]}>Durmiendo</Text>
-            <Text style={[styles.axisLabel, { textAlign: 'right' }]}>Despierto</Text>
-          </View>
-        </View>
-
         <View style={styles.svgContainer}>
           <Svg
             width={CHART_WIDTH + PADDING * 2}
@@ -240,40 +228,26 @@ export default function SleepTimelineChart({
               strokeDasharray="4,4"
             />
 
-            {/* Línea principal del sueño */}
-            <Polyline
-              points={polylinePoints}
-              fill="none"
-              stroke="#4CAF50"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-
-            {/* Puntos en la línea */}
-            {points.map((point, idx) => {
-              const x = getXCoordinate(point.time);
-              const y = getYCoordinate(point.value);
-              let color = '#4CAF50'; // default
-
-              if (point.type === 'pickup') {
-                color = '#FF6B6B'; // rojo para pickups
-              } else if (point.type === 'end') {
-                color = '#FFB74D'; // amarillo para fin
-              }
-
+            {/* Barra de sueño segmentada (más clara) */}
+            {segments.map((seg, idx) => {
+              const xStart = getXCoordinate(seg.start);
+              const xEnd = getXCoordinate(seg.end);
+              const width = Math.max(2, xEnd - xStart);
+              const color = seg.type === 'sleep' ? '#4CAF50' : '#FF6B6B';
               return (
-                <Circle
-                  key={`point-${idx}`}
-                  cx={x}
-                  cy={y}
-                  r={5}
+                <Rect
+                  key={`seg-${idx}`}
+                  x={xStart}
+                  y={PADDING + (CHART_HEIGHT - PADDING * 2) / 2 - 10}
+                  width={width}
+                  height={20}
+                  rx={0}
                   fill={color}
-                  stroke="white"
-                  strokeWidth={2}
+                  opacity={0.9}
                 />
               );
             })}
+
           </Svg>
         </View>
 

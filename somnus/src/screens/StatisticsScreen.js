@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -177,16 +177,6 @@ export default function StatisticsScreen() {
     },
   });
 
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.header}>Estadísticas</Text>
-        <Text style={styles.loadingText}>Cargando datos...</Text>
-        <BottomNavBar activeTab="explore" isDark={isDark} />
-      </View>
-    );
-  }
-
   // Calcular estadísticas generales
   const avgScore = sleepData.length > 0
     ? Math.round(sleepData.reduce((sum, s) => sum + s.score, 0) / sleepData.length)
@@ -203,6 +193,34 @@ export default function StatisticsScreen() {
     if (score >= 60) return '#FFB74D'; // Amarillo/Naranja
     return '#FF6B6B'; // Rojo
   };
+
+  // Calcular horas de pickups para mostrar en texto
+  const pickupTimes = useMemo(() => {
+    if (!selectedDay || !selectedDay.startTime || !selectedDay.endTime || !selectedDay.nighttimePickups) {
+      return [];
+    }
+    const start = new Date(selectedDay.startTime);
+    const end = new Date(selectedDay.endTime);
+    const totalHours = (end - start) / (1000 * 60 * 60);
+    if (totalHours <= 0 || selectedDay.nighttimePickups <= 0) return [];
+    const interval = totalHours / (selectedDay.nighttimePickups + 1);
+    const results = [];
+    for (let i = 1; i <= selectedDay.nighttimePickups; i++) {
+      const t = new Date(start.getTime() + interval * i * 60 * 60 * 1000);
+      results.push(t.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }));
+    }
+    return results;
+  }, [selectedDay]);
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.header}>Estadísticas</Text>
+        <Text style={styles.loadingText}>Cargando datos...</Text>
+        <BottomNavBar activeTab="explore" isDark={isDark} />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -307,6 +325,32 @@ export default function StatisticsScreen() {
                     pickups={selectedDay.nighttimePickups}
                     hoursSlept={selectedDay.hoursSlept}
                   />
+
+                  {/* Pickup times list */}
+                  <View style={{ marginTop: 12 }}>
+                    <Text style={[styles.sectionTitle, { paddingHorizontal: 0, marginBottom: 8 }]}>Pickups</Text>
+                    {pickupTimes.length === 0 ? (
+                      <Text style={styles.detailStatLabel}>Sin pickups registrados.</Text>
+                    ) : (
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                        {pickupTimes.map((t, idx) => (
+                          <View
+                            key={`pickup-${idx}`}
+                            style={{
+                              paddingHorizontal: 10,
+                              paddingVertical: 6,
+                              borderRadius: 8,
+                              backgroundColor: theme.SECONDARY_COLOR,
+                              borderWidth: 1,
+                              borderColor: theme.BORDER_COLOR,
+                            }}
+                          >
+                            <Text style={{ color: theme.TEXT_COLOR }}>{t}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+                  </View>
 
                   {/* Additional details */}
                   <View style={[styles.detailStats, { marginTop: 20 }]}>
