@@ -293,7 +293,7 @@ export default function AlbumDetailScreen() {
         
         <TouchableOpacity 
           style={styles.navButton}
-          onPress={() => router.push('/')}
+          onPress={() => router.push('/(tabs)')}
         >
           <HomeIconNav size={24} color={theme.TEXT_COLOR + '99'} />
         </TouchableOpacity>
@@ -310,13 +310,13 @@ function createStyles(theme, isDark) {
   return StyleSheet.create({
     screen: {
       flex: 1,
-      backgroundColor: 'transparent',
+      backgroundColor: theme.BACKGROUND_COLOR,
     },
     centerContainer: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: 'transparent',
+      backgroundColor: theme.BACKGROUND_COLOR,
     },
     loadingText: {
       marginTop: 16,

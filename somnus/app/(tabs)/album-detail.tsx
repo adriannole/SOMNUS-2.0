@@ -1,3 +1,5 @@
-import AlbumDetailScreen from '../../src/screens/AlbumDetailScreen';
+import { Redirect } from 'expo-router';
 
-export default AlbumDetailScreen;
+export default function AlbumDetailRedirect() {
+	return <Redirect href="/album-view" />;
+}

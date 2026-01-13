@@ -16,6 +16,7 @@ export default function TabLayout() {
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarStyle: { display: 'none' }, // Ocultar barra de tabs predeterminada
+        sceneStyle: { backgroundColor: Colors[colorScheme ?? 'light'].background },
       }}>
       <Tabs.Screen
         name="index"

@@ -102,7 +102,7 @@ export function AnimatedBackground({ isDark, theme }) {
           position: 'absolute',
           width: '100%',
           height: '100%',
-          backgroundColor: isDark ? '#0F1419' : '#FAFBFD',
+          backgroundColor: getBackgroundColor(),
         }}
       />
 

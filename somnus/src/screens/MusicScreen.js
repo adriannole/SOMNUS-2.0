@@ -112,7 +112,7 @@ export default function MusicScreen() {
   const handleAlbumPress = (album) => {
     console.log('[MusicScreen] 📱 Navigating to album detail:', album.title);
     router.push({
-      pathname: '/album-detail',
+      pathname: '/album-view',
       params: { 
         albumId: album.id,
         albumTitle: album.title,
@@ -265,7 +265,7 @@ function createStyles(theme, isDark) {
   return StyleSheet.create({
     screen: {
       flex: 1,
-      backgroundColor: 'transparent',
+      backgroundColor: theme.BACKGROUND_COLOR,
     },
     scrollContent: {
       paddingTop: 50,
@@ -275,7 +275,7 @@ function createStyles(theme, isDark) {
       justifyContent: 'center',
       alignItems: 'center',
       paddingHorizontal: 40,
-      backgroundColor: 'transparent',
+      backgroundColor: theme.BACKGROUND_COLOR,
     },
     loadingText: {
       marginTop: 16,
