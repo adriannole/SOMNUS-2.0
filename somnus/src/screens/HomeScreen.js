@@ -247,41 +247,124 @@ export default function HomeScreen() {
 
   const renderCircularScore = () => {
     const score = sleepData.score;
-    const radius = 100;
-    const strokeWidth = 16;
-    const circumference = 2 * Math.PI * radius;
-    const greenEnd = 80; // 0-80 es verde
-    const yellowEnd = 60; // 60-80 es amarillo
-    const redStart = 0; // 0-60 es rojo
+    const hoursSlept = sleepData.hoursSlept || 0;
+    const timeAwake = sleepData.timeAwake || 0;
+    const pickups = sleepData.nighttimePickups || 0;
+    
+    // Si no hay datos (score = 0), no mostrar segmentos
+    if (score === 0 || hoursSlept === 0) {
+      return (
+        <View style={styles.scoreCircleContainer}>
+          {/* Fondo del círculo */}
+          <View style={[styles.scoreCircle, { borderColor: theme.SECONDARY_COLOR }]} />
+
+          {/* Centro con el número */}
+          <View style={styles.scoreInner}>
+            <Animated.Text style={[styles.scoreNumber, { color: getScoreColor(score) }]}>
+              {scoreAnim.interpolate({
+                inputRange: [0, 100],
+                outputRange: ['0', '100'],
+                extrapolate: 'clamp',
+              })}
+            </Animated.Text>
+            <Text style={styles.scoreLabel}>Night Score</Text>
+          </View>
+        </View>
+      );
+    }
+    
+    // Convertir pickups a horas (cada pickup = 1 minuto)
+    const pickupHours = pickups / 60;
+    
+    // Calcular total de actividad en horas
+    const totalHours = hoursSlept + timeAwake + pickupHours;
+    
+    // Calcular proporciones (como porcentaje del total)
+    const sleepPercent = totalHours > 0 ? (hoursSlept / totalHours) * 100 : 0;
+    const awakePercent = totalHours > 0 ? (timeAwake / totalHours) * 100 : 0;
+    const pickupPercent = totalHours > 0 ? (pickupHours / totalHours) * 100 : 0;
+    
+    // Convertir a grados (360° = 100%)
+    const sleepDegrees = (sleepPercent / 100) * 360;
+    const awakeDegrees = (awakePercent / 100) * 360;
+    const pickupDegrees = (pickupPercent / 100) * 360;
+    
+    // Crear segmentos para cada métrica
+    const segments = [];
+    let currentAngle = -90; // Comenzar desde arriba
+    
+    // Segmentos de sueño (verde)
+    const sleepSegments = Math.max(1, Math.round(sleepDegrees / 6));
+    for (let i = 0; i < sleepSegments; i++) {
+      segments.push(
+        <View 
+          key={`sleep-${i}`}
+          style={[
+            styles.scoreSegment, 
+            { 
+              borderTopColor: '#4ade80',
+              borderRightColor: 'transparent',
+              borderBottomColor: 'transparent',
+              borderLeftColor: 'transparent',
+              transform: [{ rotate: `${currentAngle}deg` }],
+            }
+          ]} 
+        />
+      );
+      currentAngle += 6;
+    }
+    
+    // Segmentos de tiempo despierto (amarillo)
+    const awakeSegments = Math.max(0, Math.round(awakeDegrees / 6));
+    for (let i = 0; i < awakeSegments; i++) {
+      segments.push(
+        <View 
+          key={`awake-${i}`}
+          style={[
+            styles.scoreSegment, 
+            { 
+              borderTopColor: '#fbbf24',
+              borderRightColor: 'transparent',
+              borderBottomColor: 'transparent',
+              borderLeftColor: 'transparent',
+              transform: [{ rotate: `${currentAngle}deg` }],
+            }
+          ]} 
+        />
+      );
+      currentAngle += 6;
+    }
+    
+    // Segmentos de pickups (rojo) - basado en tiempo real
+    // Si es muy pequeño (menos de 1 grado), no mostrar nada
+    let pickupSegments = Math.round(pickupDegrees / 6);
+    
+    for (let i = 0; i < pickupSegments; i++) {
+      segments.push(
+        <View 
+          key={`pickup-${i}`}
+          style={[
+            styles.scoreSegment, 
+            { 
+              borderTopColor: '#f87171',
+              borderRightColor: 'transparent',
+              borderBottomColor: 'transparent',
+              borderLeftColor: 'transparent',
+              transform: [{ rotate: `${currentAngle}deg` }],
+            }
+          ]} 
+        />
+      );
+      currentAngle += 6;
+    }
 
     return (
       <View style={styles.scoreCircleContainer}>
         {/* Fondo del círculo */}
         <View style={[styles.scoreCircle, { borderColor: theme.SECONDARY_COLOR }]} />
         
-        {/* Segmento Verde (80-100) */}
-        {score >= 80 && (
-          <View style={[styles.scoreSegment, { 
-            borderTopColor: '#4ade80',
-            transform: [{ rotate: '144deg' }] 
-          }]} />
-        )}
-        
-        {/* Segmento Amarillo (60-80) */}
-        {score >= 60 && (
-          <View style={[styles.scoreSegment, { 
-            borderTopColor: '#fbbf24',
-            transform: [{ rotate: '72deg' }] 
-          }]} />
-        )}
-        
-        {/* Segmento Rojo (0-60) */}
-        {score > 0 && (
-          <View style={[styles.scoreSegment, { 
-            borderTopColor: '#f87171',
-            transform: [{ rotate: '0deg' }] 
-          }]} />
-        )}
+        {/* Segmentos de métricas */}
+        {segments}
 
         {/* Centro con el número */}
         <View style={styles.scoreInner}>

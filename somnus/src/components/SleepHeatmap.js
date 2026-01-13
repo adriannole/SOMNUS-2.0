@@ -19,7 +19,12 @@ export default function SleepHeatmap({ data, onDayPress }) {
   const scoreMap = useMemo(() => {
     const map = {};
     data.forEach(session => {
-      const dateKey = new Date(session.date).toISOString().split('T')[0];
+      const sessionDate = new Date(session.date);
+      // Usar la fecha local sin conversión UTC
+      const year = sessionDate.getFullYear();
+      const month = String(sessionDate.getMonth() + 1).padStart(2, '0');
+      const day = String(sessionDate.getDate()).padStart(2, '0');
+      const dateKey = `${year}-${month}-${day}`;
       map[dateKey] = session;
     });
     return map;
@@ -28,13 +33,21 @@ export default function SleepHeatmap({ data, onDayPress }) {
   // Generar grid de 30 días
   const generateCalendarDays = () => {
     const today = new Date();
-    const thirtyDaysAgo = new Date(today.getTime() - 29 * 24 * 60 * 60 * 1000);
+    today.setHours(12, 0, 0, 0); // Usar mediodía para evitar problemas de zona horaria
+    
+    const thirtyDaysAgo = new Date(today);
+    thirtyDaysAgo.setDate(today.getDate() - 29);
     
     const days = [];
     const current = new Date(thirtyDaysAgo);
 
     while (current <= today) {
-      const dateKey = current.toISOString().split('T')[0];
+      // Generar dateKey usando fecha local
+      const year = current.getFullYear();
+      const month = String(current.getMonth() + 1).padStart(2, '0');
+      const day = String(current.getDate()).padStart(2, '0');
+      const dateKey = `${year}-${month}-${day}`;
+      
       const sessionData = scoreMap[dateKey];
       
       days.push({

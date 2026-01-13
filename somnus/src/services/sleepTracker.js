@@ -435,7 +435,7 @@ class SleepTracker {
       for (let i = 29; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
-        date.setHours(23, 0, 0, 0); // Simular que terminó a las 11 PM
+        date.setHours(8, 0, 0, 0); // Simular que terminó a las 8 AM (día siguiente)
         
         // Generar datos realistas variados
         const hoursSlept = 6 + Math.random() * 3; // 6-9 horas
