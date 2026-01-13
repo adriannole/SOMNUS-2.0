@@ -424,6 +424,73 @@ class SleepTracker {
     }
   }
 
+  // ==================== DATOS DE PRUEBA ====================
+  async generateTestData() {
+    try {
+      console.log('[SleepTracker] 🎲 Generating test data for the week...');
+      
+      const testSessions = [];
+      
+      // Generar datos para los últimos 7 días
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        date.setHours(23, 0, 0, 0); // Simular que terminó a las 11 PM
+        
+        // Generar datos realistas variados
+        const hoursSlept = 6 + Math.random() * 3; // 6-9 horas
+        const pickups = Math.floor(Math.random() * 5); // 0-4 pickups
+        const timeAwake = Math.random() * 0.5; // 0-0.5 horas despierto
+        
+        // Calcular score basado en la lógica del tracker
+        let score = 100;
+        
+        // Penalización por duración
+        if (hoursSlept < 7) {
+          score -= (7 - hoursSlept) * 3;
+        } else if (hoursSlept > 9) {
+          score -= (hoursSlept - 9) * 2;
+        }
+        
+        // Penalización por pickups
+        score -= pickups * 6;
+        
+        // Penalización por tiempo despierto
+        score -= timeAwake * 4;
+        
+        const finalScore = Math.max(0, Math.min(100, Math.round(score)));
+        
+        testSessions.push({
+          date: date.toISOString(),
+          score: finalScore,
+          hoursSlept: Math.round(hoursSlept * 10) / 10,
+          timeAwake: Math.round(timeAwake * 10) / 10,
+          nighttimePickups: pickups,
+          movements: Math.floor(Math.random() * 50),
+          quality: finalScore >= 80 ? 'excellent' : finalScore >= 60 ? 'good' : 'poor',
+          startTime: new Date(date.getTime() - hoursSlept * 3600000).toISOString(),
+          endTime: date.toISOString(),
+        });
+      }
+      
+      // Guardar todas las sesiones de prueba
+      await AsyncStorage.setItem('sleep_sessions', JSON.stringify(testSessions));
+      
+      console.log('[SleepTracker] ✅ Test data generated successfully!');
+      console.log('[SleepTracker] 📊 Sessions created:', testSessions.length);
+      testSessions.forEach((session, index) => {
+        const date = new Date(session.date);
+        console.log(`  ${index + 1}. ${date.toLocaleDateString()}: Score ${session.score}, ${session.hoursSlept}h, ${session.nighttimePickups} pickups`);
+      });
+      
+      return testSessions;
+    } catch (error) {
+      console.error('[SleepTracker] ❌ Error generating test data:', error);
+      return null;
+    }
+  }
+
+
   // ==================== AUTO-TRACKING POR INACTIVIDAD ====================
   // Monitorea inactividad del celular y activa tracking automáticamente
   // Lógica inteligente con confirmación de sueño real (1 hora sin interrupciones)

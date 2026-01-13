@@ -153,3 +153,17 @@ export const MoonIconDark = ({ size = 24, color = '#fff' }) => (
     />
   </Svg>
 );
+
+export const MusicIcon = ({ size = 24, color = '#fff' }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M9 18V5l12-2v13"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Circle cx="6" cy="18" r="3" stroke={color} strokeWidth="2" fill={color} />
+    <Circle cx="18" cy="16" r="3" stroke={color} strokeWidth="2" fill={color} />
+  </Svg>
+);

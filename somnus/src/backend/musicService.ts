@@ -96,3 +96,36 @@ export async function markMusicOnboardingDone(): Promise<void> {
     throw new Error(error.message);
   }
 }
+
+export async function getLikedAlbums(): Promise<Album[]> {
+  const userId = await getUserId();
+
+  const { data, error } = await supabase
+    .from('user_album_preferences')
+    .select(`
+      album_id,
+      liked,
+      albums (
+        id,
+        title,
+        artist,
+        cover_url,
+        audio_url,
+        tags
+      )
+    `)
+    .eq('user_id', userId)
+    .eq('liked', true);
+
+  if (error) {
+    console.log('[musicService] Error fetching liked albums:', error.message);
+    throw new Error(error.message);
+  }
+
+  const albums = (data ?? [])
+    .map((item: any) => item.albums)
+    .filter((album: any) => album !== null) as Album[];
+
+  console.log('[musicService] Liked albums:', albums.length);
+  return albums;
+}
