@@ -10,6 +10,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../hooks/useTheme';
 import { AnimatedBackground } from '../components/AnimatedBackground';
@@ -276,95 +277,66 @@ export default function HomeScreen() {
     // Convertir pickups a horas (cada pickup = 1 minuto)
     const pickupHours = pickups / 60;
     
-    // Calcular total de actividad en horas
+    // Calcular total de tiempo de la noche
     const totalHours = hoursSlept + timeAwake + pickupHours;
     
-    // Calcular proporciones (como porcentaje del total)
-    const sleepPercent = totalHours > 0 ? (hoursSlept / totalHours) * 100 : 0;
-    const awakePercent = totalHours > 0 ? (timeAwake / totalHours) * 100 : 0;
-    const pickupPercent = totalHours > 0 ? (pickupHours / totalHours) * 100 : 0;
+    // Calcular porcentajes exactos del total
+    const sleepPercent = (hoursSlept / totalHours) * 100;
+    const awakePercent = (timeAwake / totalHours) * 100;
+    const pickupPercent = (pickupHours / totalHours) * 100;
     
-    // Convertir a grados (360° = 100%)
+    // Configuración del círculo SVG
+    const size = 240;
+    const strokeWidth = 20;
+    const radius = (size - strokeWidth) / 2;
+    const circumference = 2 * Math.PI * radius;
+
     const sleepDegrees = (sleepPercent / 100) * 360;
     const awakeDegrees = (awakePercent / 100) * 360;
     const pickupDegrees = (pickupPercent / 100) * 360;
-    
-    // Crear segmentos para cada métrica
-    const segments = [];
-    let currentAngle = -90; // Comenzar desde arriba
-    
-    // Segmentos de sueño (verde)
-    const sleepSegments = Math.max(1, Math.round(sleepDegrees / 6));
-    for (let i = 0; i < sleepSegments; i++) {
-      segments.push(
-        <View 
-          key={`sleep-${i}`}
-          style={[
-            styles.scoreSegment, 
-            { 
-              borderTopColor: '#4ade80',
-              borderRightColor: 'transparent',
-              borderBottomColor: 'transparent',
-              borderLeftColor: 'transparent',
-              transform: [{ rotate: `${currentAngle}deg` }],
-            }
-          ]} 
+
+    // Helper para dibujar un arco usando strokeDasharray
+    const renderArc = (color, percent, startAngle) => {
+      if (percent <= 0) return null;
+      const arcLength = (percent / 100) * circumference;
+      return (
+        <Circle
+          key={`${color}-${percent}-${startAngle}`}
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeDasharray={`${arcLength} ${circumference}`}
+          strokeDashoffset={0}
+          strokeLinecap="round"
+          fill="transparent"
+          rotation={startAngle}
+          originX={size / 2}
+          originY={size / 2}
         />
       );
-      currentAngle += 6;
-    }
-    
-    // Segmentos de tiempo despierto (amarillo)
-    const awakeSegments = Math.max(0, Math.round(awakeDegrees / 6));
-    for (let i = 0; i < awakeSegments; i++) {
-      segments.push(
-        <View 
-          key={`awake-${i}`}
-          style={[
-            styles.scoreSegment, 
-            { 
-              borderTopColor: '#fbbf24',
-              borderRightColor: 'transparent',
-              borderBottomColor: 'transparent',
-              borderLeftColor: 'transparent',
-              transform: [{ rotate: `${currentAngle}deg` }],
-            }
-          ]} 
-        />
-      );
-      currentAngle += 6;
-    }
-    
-    // Segmentos de pickups (rojo) - basado en tiempo real
-    // Si es muy pequeño (menos de 1 grado), no mostrar nada
-    let pickupSegments = Math.round(pickupDegrees / 6);
-    
-    for (let i = 0; i < pickupSegments; i++) {
-      segments.push(
-        <View 
-          key={`pickup-${i}`}
-          style={[
-            styles.scoreSegment, 
-            { 
-              borderTopColor: '#f87171',
-              borderRightColor: 'transparent',
-              borderBottomColor: 'transparent',
-              borderLeftColor: 'transparent',
-              transform: [{ rotate: `${currentAngle}deg` }],
-            }
-          ]} 
-        />
-      );
-      currentAngle += 6;
-    }
+    };
 
     return (
       <View style={styles.scoreCircleContainer}>
-        {/* Fondo del círculo */}
-        <View style={[styles.scoreCircle, { borderColor: theme.SECONDARY_COLOR }]} />
-        
-        {/* Segmentos de métricas */}
-        {segments}
+        <Svg width={size} height={size} style={styles.scoreSvg}>
+          {/* Fondo */}
+          <Circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke={theme.SECONDARY_COLOR}
+            strokeWidth={strokeWidth}
+            fill="transparent"
+          />
+        </Svg>
+
+        <Svg width={size} height={size} style={styles.scoreSvg}>
+          {renderArc('#4ade80', sleepPercent, -90)}
+          {renderArc('#fbbf24', awakePercent, -90 + sleepDegrees)}
+          {renderArc('#f87171', Math.max(pickupPercent, pickups > 0 ? 0.5 : 0), -90 + sleepDegrees + awakeDegrees)}
+        </Svg>
 
         {/* Centro con el número */}
         <View style={styles.scoreInner}>
@@ -664,6 +636,11 @@ function createStyles(theme, isDark) {
       alignItems: 'center',
       position: 'relative',
     },
+    scoreSvg: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+    },
     scoreCircle: {
       position: 'absolute',
       width: 240,
@@ -677,9 +654,12 @@ function createStyles(theme, isDark) {
       width: 240,
       height: 240,
       borderRadius: 120,
-      borderWidth: 16,
+      borderWidth: 24, // Más grueso
       borderColor: 'transparent',
-      borderTopWidth: 16,
+      borderTopWidth: 24,
+      borderRightWidth: 0,
+      borderBottomWidth: 0,
+      borderLeftWidth: 0,
     },
     scoreInner: {
       width: 180,
