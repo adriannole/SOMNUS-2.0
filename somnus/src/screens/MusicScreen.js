@@ -8,12 +8,14 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../hooks/useTheme';
 import { AnimatedBackground } from '../components/AnimatedBackground';
-import { getLikedAlbums } from '../backend/musicService';
+import { getLikedAlbums, getSongsByAlbumId } from '../backend/musicService';
 import { PlayIcon, HomeIconNav, ChartIcon, SettingsIcon, MusicIcon } from '../components/Icons';
+import { Audio } from 'expo-av';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 60) / 2; // 2 columnas con margen
@@ -26,9 +28,18 @@ export default function MusicScreen() {
   const [albums, setAlbums] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [playingAlbumId, setPlayingAlbumId] = useState(null);
+  const [isPlayingAll, setIsPlayingAll] = useState(false);
+  const soundRef = React.useRef(null);
 
   useEffect(() => {
     loadLikedAlbums();
+    
+    return () => {
+      if (soundRef.current) {
+        soundRef.current.unloadAsync().catch(() => {});
+      }
+    };
   }, []);
 
   const loadLikedAlbums = async () => {
@@ -47,11 +58,76 @@ export default function MusicScreen() {
     }
   };
 
+  const handlePlayAll = async (album, e) => {
+    e.stopPropagation();
+    try {
+      // Get songs for this album
+      const songs = await getSongsByAlbumId(album.id);
+      if (songs.length === 0) {
+        Alert.alert('No hay canciones', 'Este álbum aún no tiene canciones disponibles');
+        return;
+      }
+
+      if (playingAlbumId === album.id && isPlayingAll) {
+        // Stop playback
+        if (soundRef.current) {
+          await soundRef.current.stopAsync();
+          await soundRef.current.unloadAsync();
+          soundRef.current = null;
+        }
+        setPlayingAlbumId(null);
+        setIsPlayingAll(false);
+      } else {
+        // Stop any previous playback
+        if (soundRef.current) {
+          await soundRef.current.stopAsync();
+          await soundRef.current.unloadAsync();
+        }
+
+        // Play first song
+        const firstSong = songs[0];
+        console.log('[MusicScreen] 🎵 Playing:', firstSong.title, 'from', album.title);
+        
+        const { sound } = await Audio.Sound.createAsync({
+          uri: firstSong.audio_url,
+        });
+        soundRef.current = sound;
+        await sound.playAsync();
+        setPlayingAlbumId(album.id);
+        setIsPlayingAll(true);
+
+        // Handle song finish
+        sound.setOnPlaybackStatusUpdate((status) => {
+          if (status.didJustFinish) {
+            console.log('[MusicScreen] Song finished, could implement auto-advance here');
+          }
+        });
+      }
+    } catch (err) {
+      console.error('[MusicScreen]  Error playing songs:', err);
+      Alert.alert('Error', 'No se pudo reproducir la canción');
+    }
+  };
+
+  const handleAlbumPress = (album) => {
+    console.log('[MusicScreen] 📱 Navigating to album detail:', album.title);
+    router.push({
+      pathname: '/album-detail',
+      params: { 
+        albumId: album.id,
+        albumTitle: album.title,
+        albumCover: album.cover_url,
+        albumArtist: album.artist,
+      },
+    });
+  };
+
   const renderAlbumCard = (album) => (
     <TouchableOpacity
       key={album.id}
       style={styles.albumCard}
       activeOpacity={0.8}
+      onPress={() => handleAlbumPress(album)}
     >
       <View style={styles.albumCoverContainer}>
         {album.cover_url ? (
@@ -67,11 +143,15 @@ export default function MusicScreen() {
         )}
         
         {/* Botón de play superpuesto */}
-        <View style={styles.playOverlay}>
-          <View style={styles.playButton}>
+        <TouchableOpacity 
+          style={styles.playOverlay}
+          activeOpacity={0.7}
+          onPress={(e) => handlePlayAll(album, e)}
+        >
+          <View style={[styles.playButton, playingAlbumId === album.id && isPlayingAll && styles.playButtonActive]}>
             <PlayIcon size={24} color={isDark ? '#0b1220' : '#fff'} />
           </View>
-        </View>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.albumInfo}>
@@ -300,7 +380,6 @@ function createStyles(theme, isDark) {
       backgroundColor: 'rgba(0, 0, 0, 0.3)',
       justifyContent: 'center',
       alignItems: 'center',
-      opacity: 0,
     },
     playButton: {
       width: 56,
@@ -314,6 +393,9 @@ function createStyles(theme, isDark) {
       shadowOpacity: 0.4,
       shadowRadius: 12,
       elevation: 8,
+    },
+    playButtonActive: {
+      opacity: 0.8,
     },
     albumInfo: {
       marginTop: 12,

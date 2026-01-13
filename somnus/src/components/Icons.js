@@ -167,3 +167,22 @@ export const MusicIcon = ({ size = 24, color = '#fff' }) => (
     <Circle cx="18" cy="16" r="3" stroke={color} strokeWidth="2" fill={color} />
   </Svg>
 );
+
+export const PauseIcon = ({ size = 24, color = '#fff' }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Rect x="6" y="4" width="4" height="16" rx="1" fill={color} />
+    <Rect x="14" y="4" width="4" height="16" rx="1" fill={color} />
+  </Svg>
+);
+
+export const ChevronLeftIcon = ({ size = 24, color = '#fff' }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M15 18l-6-6 6-6"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
