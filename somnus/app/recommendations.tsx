@@ -93,8 +93,30 @@ const fetchRedisRecommendations = async () => {
   }
 };
 
+const parseAIRecommendations = (text: string) => {
+  if (!text) return [];
+  
+  const items = text.split(/(?:^|\n)(?:\d+\.|[-•])\s+/).filter(item => item.trim());
+  
+  return items.map((item, idx) => {
+    const lines = item.trim().split('\n');
+    const title = lines[0]?.replace(/\*+/g, '').trim() || `Recomendación ${idx + 1}`;
+    const description = lines.slice(1).join('\n').replace(/\*+/g, '').trim();
+    
+    return {
+      id: `ai-${idx}`,
+      title,
+      description: description || title,
+      isAI: true,
+    };
+  });
+};
+
 const generateGeminiAdvice = async (sleepData: any, recommendations: any[]) => {
-  if (!GEMINI_API_KEY) return null;
+  if (!GEMINI_API_KEY) {
+    console.log('[Recommendations] No Gemini API key');
+    return null;
+  }
 
   const prompt = `Eres un especialista en sueño. Con base en estos datos del usuario:
 - Puntaje: ${sleepData?.score ?? 0}
@@ -109,26 +131,35 @@ ${recommendations
 
 Genera 3 recomendaciones claras, personalizadas y accionables en español.`;
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.6, maxOutputTokens: 220 },
-      }),
+  try {
+    console.log('[Recommendations] Calling Gemini API...');
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ 
+            parts: [{ text: prompt }] 
+          }],
+        }),
+      }
+    );
+    
+    if (!res.ok) {
+      const errText = await res.text();
+      console.warn('[Recommendations] Gemini error', res.status, errText);
+      return null;
     }
-  );
-  if (!res.ok) {
-    const errText = await res.text();
-    console.warn('[Recommendations] Gemini error', res.status, errText);
+
+    const json = await res.json();
+    console.log('[Recommendations] Gemini response:', JSON.stringify(json).substring(0, 200));
+    const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+    return text || null;
+  } catch (error) {
+    console.error('[Recommendations] Gemini request failed:', error);
     return null;
   }
-
-  const json = await res.json();
-  const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
-  return text || null;
 };
 
 export default function RecommendationsScreen() {
@@ -138,7 +169,7 @@ export default function RecommendationsScreen() {
 
   const [sleepData, setSleepData] = useState<any>(null);
   const [recommendations, setRecommendations] = useState<any[]>([]);
-  const [aiAdvice, setAiAdvice] = useState<string | null>(null);
+  const [aiRecommendations, setAiRecommendations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -167,7 +198,10 @@ export default function RecommendationsScreen() {
       setRecommendations(scored);
 
       const advice = await generateGeminiAdvice(latest, scored);
-      setAiAdvice(advice);
+      if (advice) {
+        const parsed = parseAIRecommendations(advice);
+        setAiRecommendations(parsed);
+      }
       setLoading(false);
     };
 
@@ -220,20 +254,24 @@ export default function RecommendationsScreen() {
           </View>
         </View>
 
-        {aiAdvice ? (
-          <View style={styles.aiCard}>
-            <Text style={styles.aiTitle}>Recomendaciones IA</Text>
-            <Text style={styles.aiText}>{aiAdvice}</Text>
-          </View>
-        ) : (
-          <View style={styles.aiCard}>
-            <Text style={styles.aiTitle}>Recomendaciones IA</Text>
-            <Text style={styles.aiText}>
-              Agrega tu API Key de Gemini en EXPO_PUBLIC_GEMINI_API_KEY para habilitar las
-              recomendaciones personalizadas.
-            </Text>
-          </View>
-        )}
+        {aiRecommendations.length > 0 ? (
+          <>
+            <Text style={styles.sectionTitle}>Recomendaciones IA personalizadas</Text>
+            <View style={styles.recommendationsList}>
+              {aiRecommendations.map((rec, idx) => (
+                <View key={rec.id} style={[styles.recommendationCard, styles.aiRecommendationCard]}>
+                  <View style={styles.aiRecHeader}>
+                    <View style={styles.aiRecBadge}>
+                      <Text style={styles.aiRecBadgeText}>{idx + 1}</Text>
+                    </View>
+                    <Text style={styles.recommendationTitle}>{rec.title}</Text>
+                  </View>
+                  <Text style={styles.recommendationDescription}>{rec.description}</Text>
+                </View>
+              ))}
+            </View>
+          </>
+        ) : null}
 
         <Text style={styles.sectionTitle}>Sugerencias destacadas</Text>
         <View style={styles.recommendationsList}>
@@ -329,25 +367,30 @@ const createStyles = (theme: any, isDark: boolean) =>
       fontSize: 15,
       fontWeight: '700',
     },
-    aiCard: {
-      marginHorizontal: 20,
-      backgroundColor: isDark ? '#1f2937' : '#eef2ff',
-      borderRadius: 18,
-      padding: 16,
-      borderWidth: 1,
-      borderColor: theme.BORDER_COLOR,
-      marginBottom: 16,
+    aiRecommendationCard: {
+      borderLeftWidth: 4,
+      borderLeftColor: theme.ACCENT_COLOR,
+      backgroundColor: isDark ? '#1f2937' : '#f0f9ff',
     },
-    aiTitle: {
-      color: theme.TEXT_COLOR,
-      fontSize: 16,
-      fontWeight: '700',
+    aiRecHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
       marginBottom: 10,
+      gap: 12,
     },
-    aiText: {
-      color: theme.TEXT_COLOR,
+    aiRecBadge: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: theme.ACCENT_COLOR,
+      justifyContent: 'center',
+      alignItems: 'center',
+      flexShrink: 0,
+    },
+    aiRecBadgeText: {
+      color: isDark ? '#0b1220' : '#fff',
+      fontWeight: '700',
       fontSize: 14,
-      lineHeight: 20,
     },
     sectionTitle: {
       color: theme.TEXT_COLOR,
@@ -355,10 +398,12 @@ const createStyles = (theme: any, isDark: boolean) =>
       fontWeight: '700',
       marginHorizontal: 20,
       marginBottom: 12,
+      marginTop: 20,
     },
     recommendationsList: {
       marginHorizontal: 20,
       gap: 12,
+      marginBottom: 16,
     },
     recommendationCard: {
       backgroundColor: theme.SECONDARY_COLOR,
@@ -372,6 +417,7 @@ const createStyles = (theme: any, isDark: boolean) =>
       fontSize: 15,
       fontWeight: '700',
       marginBottom: 6,
+      flex: 1,
     },
     recommendationDescription: {
       color: theme.TEXT_COLOR + 'cc',
