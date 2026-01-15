@@ -20,32 +20,44 @@ const DEFAULT_RECOMMENDATIONS = [
   {
     id: 'regular-schedule',
     title: 'Rutina constante',
-    description: 'Intenta dormir y despertar a la misma hora para estabilizar el ritmo circadiano.',
+    description: 'Dormi y despiértate a la misma hora cada día para estabilizar tu ritmo circadiano.',
     vector: [0.9, 0.7, -0.4, -0.2],
   },
   {
     id: 'reduce-awake',
     title: 'Reduce despertares',
-    description: 'Evita pantallas 60 min antes de dormir y mantén la habitación oscura y fresca.',
+    description: 'Evita pantallas 90 minutos antes de dormir y mantén la habitación fresca y oscura.',
     vector: [0.6, 0.4, -0.8, -0.3],
   },
   {
     id: 'minimize-pickups',
     title: 'Menos pickups nocturnos',
-    description: 'Silencia notificaciones y coloca el teléfono lejos de la cama.',
+    description: 'Silencia notificaciones de noche y coloca el teléfono fuera de la habitación.',
     vector: [0.4, 0.2, -0.2, -0.9],
   },
   {
     id: 'optimize-sleep',
-    title: 'Mejora la calidad del sueño',
-    description: 'Practica respiración 4-7-8 y evita cafeína por la tarde.',
+    title: 'Mejora calidad del sueño',
+    description: 'Practica respiración 4-7-8 y evita cafeína después de las 2 PM.',
     vector: [0.8, 0.6, -0.3, -0.4],
   },
   {
     id: 'wind-down',
     title: 'Rutina de relajación',
-    description: 'Dedica 15 minutos a lectura ligera o estiramientos suaves.',
+    description: 'Dedica 15 minutos antes de dormir a lectura, meditación o baño tibio.',
     vector: [0.7, 0.5, -0.5, -0.2],
+  },
+  {
+    id: 'sleep-cycles',
+    title: 'Respeta ciclos de sueño',
+    description: 'Duerme múltiplos de 90 minutos para despertar en fase de sueño ligero.',
+    vector: [0.85, 0.75, -0.35, -0.15],
+  },
+  {
+    id: 'exercise',
+    title: 'Ejercicio regular',
+    description: 'Realiza actividad física en la mañana o tarde para mejorar el sueño profundo.',
+    vector: [0.8, 0.7, -0.4, -0.2],
   },
 ];
 
@@ -118,21 +130,28 @@ const generateGeminiAdvice = async (sleepData: any, recommendations: any[]) => {
     return null;
   }
 
-  const prompt = `Eres un especialista en sueño. Con base en estos datos del usuario:
-- Puntaje: ${sleepData?.score ?? 0}
-- Horas dormidas: ${sleepData?.hoursSlept ?? 0}
-- Tiempo despierto: ${sleepData?.timeAwake ?? 0}
+  const topRecommendations = recommendations.slice(0, 3);
+  const baseScore = sleepData?.score ?? 0;
+  const severity = baseScore < 40 ? 'severa' : baseScore < 60 ? 'moderada' : 'leve';
+
+  const prompt = `Eres un especialista en medicina del sueño. Con base en estos datos del usuario:
+- Puntaje de calidad: ${baseScore}/100 (${severity})
+- Horas dormidas: ${sleepData?.hoursSlept ?? 0}h
+- Tiempo despierto: ${sleepData?.timeAwake ?? 0}h
 - Pickups nocturnos: ${sleepData?.nighttimePickups ?? 0}
 
-Y estas recomendaciones priorizadas:
-${recommendations
+Las 3 recomendaciones más relevantes según su patrón son:
+${topRecommendations
   .map((rec, idx) => `${idx + 1}. ${rec.title}: ${rec.description}`)
   .join('\n')}
 
-Genera 3 recomendaciones claras, personalizadas y accionables en español.`;
+Genera 3 recomendaciones CORTAS y MUY ESPECÍFICAS para este usuario (máximo 1-2 líneas cada una). 
+Sé conciso y directo. Incluye exactamente qué hacer.
+
+Formato: Escribe cada recomendación en una línea empezando con "1.", "2." o "3."`;
 
   try {
-    console.log('[Recommendations] Calling Gemini API...');
+    console.log('[Recommendations] Calling Gemini API with top scores:', topRecommendations.map(r => r.score.toFixed(3)));
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
@@ -170,7 +189,18 @@ export default function RecommendationsScreen() {
   const [sleepData, setSleepData] = useState<any>(null);
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [aiRecommendations, setAiRecommendations] = useState<any[]>([]);
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+
+  const toggleExpand = (id: string) => {
+    const newExpanded = new Set(expandedCards);
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id);
+    } else {
+      newExpanded.add(id);
+    }
+    setExpandedCards(newExpanded);
+  };
 
   useEffect(() => {
     const loadRecommendations = async () => {
@@ -228,7 +258,7 @@ export default function RecommendationsScreen() {
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backText}>←</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>Recommendations</Text>
+          <Text style={styles.title}>Mejora tu sueño</Text>
           <View style={styles.headerSpacer} />
         </View>
 
@@ -256,32 +286,30 @@ export default function RecommendationsScreen() {
 
         {aiRecommendations.length > 0 ? (
           <>
-            <Text style={styles.sectionTitle}>Recomendaciones IA personalizadas</Text>
+            <Text style={styles.sectionTitle}>Aquí tienes recomendaciones segun tus resultados</Text>
             <View style={styles.recommendationsList}>
               {aiRecommendations.map((rec, idx) => (
-                <View key={rec.id} style={[styles.recommendationCard, styles.aiRecommendationCard]}>
+                <TouchableOpacity 
+                  key={rec.id} 
+                  style={styles.aiRecommendationCard}
+                  onPress={() => toggleExpand(rec.id)}
+                  activeOpacity={0.6}
+                >
                   <View style={styles.aiRecHeader}>
                     <View style={styles.aiRecBadge}>
                       <Text style={styles.aiRecBadgeText}>{idx + 1}</Text>
                     </View>
                     <Text style={styles.recommendationTitle}>{rec.title}</Text>
+                    <Text style={styles.expandIcon}>{expandedCards.has(rec.id) ? '−' : '+'}</Text>
                   </View>
-                  <Text style={styles.recommendationDescription}>{rec.description}</Text>
-                </View>
+                  {expandedCards.has(rec.id) && (
+                    <Text style={styles.recommendationDescription}>{rec.description}</Text>
+                  )}
+                </TouchableOpacity>
               ))}
             </View>
           </>
         ) : null}
-
-        <Text style={styles.sectionTitle}>Sugerencias destacadas</Text>
-        <View style={styles.recommendationsList}>
-          {recommendations.map((rec) => (
-            <View key={rec.id} style={styles.recommendationCard}>
-              <Text style={styles.recommendationTitle}>{rec.title}</Text>
-              <Text style={styles.recommendationDescription}>{rec.description}</Text>
-            </View>
-          ))}
-        </View>
 
         <View style={{ height: 80 }} />
       </ScrollView>
@@ -340,43 +368,74 @@ const createStyles = (theme: any, isDark: boolean) =>
     summaryCard: {
       marginHorizontal: 20,
       backgroundColor: theme.SECONDARY_COLOR,
-      borderRadius: 18,
+      borderRadius: 16,
       padding: 16,
       borderWidth: 1,
       borderColor: theme.BORDER_COLOR,
-      marginBottom: 16,
+      marginBottom: 24,
     },
     summaryTitle: {
       color: theme.TEXT_COLOR,
-      fontSize: 16,
-      fontWeight: '700',
+      fontSize: 14,
+      fontWeight: '600',
       marginBottom: 12,
     },
     summaryRow: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginBottom: 8,
+      marginBottom: 10,
+      paddingBottom: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: `${theme.BORDER_COLOR}50`,
     },
     summaryLabel: {
-      color: theme.TEXT_COLOR + 'cc',
-      fontSize: 14,
-      fontWeight: '600',
+      color: theme.TEXT_COLOR,
+      fontSize: 13,
+      fontWeight: '500',
+      opacity: 0.8,
     },
     summaryValue: {
       fontSize: 15,
       fontWeight: '700',
     },
+    sectionTitle: {
+      color: theme.TEXT_COLOR,
+      fontSize: 16,
+      fontWeight: '700',
+      marginHorizontal: 20,
+      marginBottom: 12,
+      marginTop: 20,
+    },
+    recommendationsList: {
+      marginHorizontal: 20,
+      gap: 10,
+      marginBottom: 16,
+    },
+    recommendationCard: {
+      backgroundColor: theme.SECONDARY_COLOR,
+      borderRadius: 12,
+      padding: 14,
+      borderWidth: 1,
+      borderColor: theme.BORDER_COLOR,
+    },
     aiRecommendationCard: {
-      borderLeftWidth: 4,
-      borderLeftColor: theme.ACCENT_COLOR,
-      backgroundColor: isDark ? '#1f2937' : '#f0f9ff',
+      backgroundColor: theme.SECONDARY_COLOR,
+      borderRadius: 12,
+      padding: 14,
+      borderWidth: 1,
+      borderColor: theme.BORDER_COLOR,
+    },
+    recHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
     },
     aiRecHeader: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: 10,
-      gap: 12,
+      justifyContent: 'space-between',
+      gap: 10,
     },
     aiRecBadge: {
       width: 32,
@@ -392,36 +451,24 @@ const createStyles = (theme: any, isDark: boolean) =>
       fontWeight: '700',
       fontSize: 14,
     },
-    sectionTitle: {
-      color: theme.TEXT_COLOR,
-      fontSize: 16,
-      fontWeight: '700',
-      marginHorizontal: 20,
-      marginBottom: 12,
-      marginTop: 20,
-    },
-    recommendationsList: {
-      marginHorizontal: 20,
-      gap: 12,
-      marginBottom: 16,
-    },
-    recommendationCard: {
-      backgroundColor: theme.SECONDARY_COLOR,
-      borderRadius: 16,
-      padding: 16,
-      borderWidth: 1,
-      borderColor: theme.BORDER_COLOR,
+    expandIcon: {
+      color: theme.ACCENT_COLOR,
+      fontSize: 18,
+      fontWeight: '600',
+      width: 24,
+      textAlign: 'right',
     },
     recommendationTitle: {
       color: theme.TEXT_COLOR,
       fontSize: 15,
-      fontWeight: '700',
-      marginBottom: 6,
+      fontWeight: '600',
       flex: 1,
     },
     recommendationDescription: {
-      color: theme.TEXT_COLOR + 'cc',
-      fontSize: 14,
+      color: theme.TEXT_COLOR,
+      fontSize: 13,
       lineHeight: 20,
+      marginTop: 10,
+      opacity: 0.8,
     },
   });

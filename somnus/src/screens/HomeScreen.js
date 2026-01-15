@@ -447,14 +447,14 @@ export default function HomeScreen() {
               style={styles.testDataButton}
               onPress={handleGenerateTestData}
             >
-              <Text style={styles.testDataButtonText}>🎲 Generar Datos</Text>
+              <Text style={styles.testDataButtonText}>Generar Datos</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
               style={[styles.testDataButton, styles.clearDataButton]}
               onPress={handleClearAllData}
             >
-              <Text style={styles.testDataButtonText}>🗑️ Limpiar Todo</Text>
+              <Text style={styles.testDataButtonText}>Limpiar Todo</Text>
             </TouchableOpacity>
           </View>
         </View>
