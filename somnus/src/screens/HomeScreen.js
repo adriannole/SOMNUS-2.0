@@ -14,6 +14,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../hooks/useTheme';
 import { AnimatedBackground } from '../components/AnimatedBackground';
+import BottomNavBar from '../components/BottomNavBar';
 import sleepTracker from '../services/sleepTracker';
 import {
   MoonIcon,
@@ -22,13 +23,9 @@ import {
   ClockIcon,
   PlayIcon,
   StopIcon,
-  HomeIconNav,
-  ChartIcon,
-  SettingsIcon,
   MenuIcon,
   SunIcon,
   MoonIconDark,
-  MusicIcon,
 } from '../components/Icons';
 
 const { width } = Dimensions.get('window');
@@ -161,27 +158,6 @@ export default function HomeScreen() {
     } catch (error) {
       console.error('[HomeScreen]  Error stopping tracking:', error);
       Alert.alert('Error', 'No se pudo detener el tracking: ' + error.message);
-    }
-  };
-
-  const handleGenerateTestData = async () => {
-    try {
-      console.log('[HomeScreen] 🎲 Generating test data...');
-      await sleepTracker.generateTestData();
-      
-      Alert.alert(
-        '✅ Datos de Prueba Generados',
-        'Se han creado 7 días de datos de sueño para probar las gráficas.\n\nLa app se recargará para mostrar los nuevos datos.',
-        [
-          {
-            text: 'OK',
-            onPress: () => loadSleepData(),
-          },
-        ]
-      );
-    } catch (error) {
-      console.error('[HomeScreen] ❌ Error generating test data:', error);
-      Alert.alert('Error', 'No se pudieron generar los datos de prueba');
     }
   };
 
@@ -440,23 +416,6 @@ export default function HomeScreen() {
         {/* Score circular */}
         <View style={styles.scoreSection}>
           {renderCircularScore()}
-          
-          {/* Botones de datos de prueba (temporal) */}
-          <View style={styles.testDataButtonsContainer}>
-            <TouchableOpacity 
-              style={styles.testDataButton}
-              onPress={handleGenerateTestData}
-            >
-              <Text style={styles.testDataButtonText}>Generar Datos</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.testDataButton, styles.clearDataButton]}
-              onPress={handleClearAllData}
-            >
-              <Text style={styles.testDataButtonText}>Limpiar Todo</Text>
-            </TouchableOpacity>
-          </View>
         </View>
 
         {/* Métricas de sueño */}
@@ -549,29 +508,7 @@ export default function HomeScreen() {
       </ScrollView>
 
       {/* Barra de navegación inferior */}
-      <View style={styles.navBar}>
-        <TouchableOpacity 
-          style={styles.navButton}
-          onPress={() => router.push('/explore')}
-        >
-          <ChartIcon size={24} color={theme.TEXT_COLOR + '99'} />
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.navButton}
-          onPress={() => router.push('/music')}
-        >
-          <MusicIcon size={24} color={theme.TEXT_COLOR + '99'} />
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={[styles.navButton, styles.navButtonActive]}>
-          <HomeIconNav size={26} color={isDark ? '#0b1220' : '#fff'} />
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.navButton}>
-          <SettingsIcon size={24} color={theme.TEXT_COLOR + '99'} />
-        </TouchableOpacity>
-      </View>
+      <BottomNavBar activeTab="home" isDark={isDark} />
     </>
   );
 }
@@ -688,30 +625,6 @@ function createStyles(theme, isDark) {
       color: theme.TEXT_COLOR + '99',
       marginTop: 4,
     },
-    testDataButtonsContainer: {
-      flexDirection: 'row',
-      marginTop: 16,
-      gap: 10,
-    },
-    testDataButton: {
-      flex: 1,
-      paddingVertical: 10,
-      paddingHorizontal: 16,
-      backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
-      borderRadius: 10,
-      borderWidth: 1,
-      borderColor: theme.BORDER_COLOR,
-    },
-    clearDataButton: {
-      backgroundColor: isDark ? '#7f1d1d' : '#fee2e2',
-      borderColor: '#dc2626',
-    },
-    testDataButtonText: {
-      fontSize: 12,
-      fontWeight: '600',
-      color: theme.TEXT_COLOR,
-      textAlign: 'center',
-    },
 
     // Métricas
     metricsContainer: {
@@ -818,38 +731,6 @@ function createStyles(theme, isDark) {
     },
 
     // Barra de navegación
-    navBar: {
-      position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      flexDirection: 'row',
-      justifyContent: 'space-around',
-      alignItems: 'center',
-      paddingVertical: 8,
-      paddingBottom: 12,
-      backgroundColor: isDark ? '#1a1f26f0' : '#fffffff0',
-      borderTopWidth: 1,
-      borderTopColor: theme.BORDER_COLOR,
-      height: 64, // Altura tipo WhatsApp
-    },
-    navButton: {
-      width: 48,
-      height: 48,
-      borderRadius: 24,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: 'transparent',
-    },
-    navButtonActive: {
-      backgroundColor: theme.ACCENT_COLOR,
-      shadowColor: theme.ACCENT_COLOR,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 12,
-      elevation: 8,
-    },
-
     // Loading & Error
     loadingContainer: {
       flex: 1,

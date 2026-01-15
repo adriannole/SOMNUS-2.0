@@ -13,8 +13,9 @@ import {
 import { useRouter } from 'expo-router';
 import { useTheme } from '../hooks/useTheme';
 import { AnimatedBackground } from '../components/AnimatedBackground';
+import BottomNavBar from '../components/BottomNavBar';
 import { getLikedAlbums, getSongsByAlbumId } from '../backend/musicService';
-import { PlayIcon, HomeIconNav, ChartIcon, SettingsIcon, MusicIcon } from '../components/Icons';
+import { PlayIcon } from '../components/Icons';
 import { Audio } from 'expo-av';
 
 const { width } = Dimensions.get('window');
@@ -232,31 +233,7 @@ export default function MusicScreen() {
       </ScrollView>
 
       {/* Barra de navegación inferior */}
-      <View style={styles.navBar}>
-        <TouchableOpacity 
-          style={styles.navButton}
-          onPress={() => router.push('/explore')}
-        >
-          <ChartIcon size={24} color={theme.TEXT_COLOR + '99'} />
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.navButton, styles.navButtonActive]}
-        >
-          <MusicIcon size={24} color={isDark ? '#0b1220' : '#fff'} />
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.navButton}
-          onPress={() => router.push('/')}
-        >
-          <HomeIconNav size={24} color={theme.TEXT_COLOR + '99'} />
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.navButton}>
-          <SettingsIcon size={24} color={theme.TEXT_COLOR + '99'} />
-        </TouchableOpacity>
-      </View>
+      <BottomNavBar activeTab="music" isDark={isDark} />
     </>
   );
 }
@@ -411,39 +388,6 @@ function createStyles(theme, isDark) {
       fontSize: 13,
       fontWeight: '500',
       color: theme.TEXT_COLOR + '99',
-    },
-
-    // Barra de navegación
-    navBar: {
-      position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      flexDirection: 'row',
-      justifyContent: 'space-around',
-      alignItems: 'center',
-      paddingVertical: 8,
-      paddingBottom: 12,
-      backgroundColor: isDark ? '#1a1f26f0' : '#fffffff0',
-      borderTopWidth: 1,
-      borderTopColor: theme.BORDER_COLOR,
-      height: 64,
-    },
-    navButton: {
-      width: 48,
-      height: 48,
-      borderRadius: 24,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: 'transparent',
-    },
-    navButtonActive: {
-      backgroundColor: theme.ACCENT_COLOR,
-      shadowColor: theme.ACCENT_COLOR,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 12,
-      elevation: 8,
     },
   });
 }

@@ -20,7 +20,7 @@ export default function BottomNavBar({ activeTab = 'home', isDark }) {
         router.push('/(tabs)');
         break;
       case 'settings':
-        // router.push('/settings');
+        router.push('/(tabs)/settings');
         break;
       default:
         break;
@@ -44,27 +44,23 @@ export default function BottomNavBar({ activeTab = 'home', isDark }) {
       height: 64,
     },
     navButton: {
-      width: 48,
-      height: 48,
-      borderRadius: 24,
+      paddingHorizontal: 20,
+      paddingVertical: 8,
+      borderRadius: 20,
       justifyContent: 'center',
       alignItems: 'center',
       backgroundColor: 'transparent',
     },
     navButtonActive: {
-      backgroundColor: theme.ACCENT_COLOR,
-      shadowColor: theme.ACCENT_COLOR,
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.4,
-      shadowRadius: 16,
-      elevation: 8,
+      backgroundColor: `${theme.ACCENT_COLOR}20`,
+      borderRadius: 20,
     },
   });
 
   return (
     <View style={styles.navBar}>
       <TouchableOpacity 
-        style={styles.navButton}
+        style={[styles.navButton, activeTab === 'explore' && styles.navButtonActive]}
         onPress={() => handleNavigation('explore')}
       >
         <ChartIcon 
@@ -74,7 +70,7 @@ export default function BottomNavBar({ activeTab = 'home', isDark }) {
       </TouchableOpacity>
       
       <TouchableOpacity 
-        style={styles.navButton}
+        style={[styles.navButton, activeTab === 'music' && styles.navButtonActive]}
         onPress={() => handleNavigation('music')}
       >
         <MusicIcon 
@@ -88,15 +84,18 @@ export default function BottomNavBar({ activeTab = 'home', isDark }) {
         onPress={() => handleNavigation('home')}
       >
         <HomeIconNav 
-          size={26} 
-          color={activeTab === 'home' ? (isDark ? '#0b1220' : '#fff') : (theme.TEXT_COLOR + '99')} 
+          size={24} 
+          color={activeTab === 'home' ? theme.ACCENT_COLOR : (theme.TEXT_COLOR + '99')} 
         />
       </TouchableOpacity>
       
-      <TouchableOpacity style={styles.navButton}>
+      <TouchableOpacity 
+        style={[styles.navButton, activeTab === 'settings' && styles.navButtonActive]}
+        onPress={() => handleNavigation('settings')}
+      >
         <SettingsIcon 
           size={24} 
-          color={theme.TEXT_COLOR + '99'} 
+          color={activeTab === 'settings' ? theme.ACCENT_COLOR : theme.TEXT_COLOR + '99'} 
         />
       </TouchableOpacity>
     </View>

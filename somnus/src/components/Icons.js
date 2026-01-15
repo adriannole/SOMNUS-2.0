@@ -71,12 +71,13 @@ export const StopIcon = ({ size = 24, color = '#fff' }) => (
 export const HomeIconNav = ({ size = 24, color = '#fff' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
-      d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      d="M3 9.5l9-7 9 7V20a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9.5z"
       fill={color}
+    />
+    <Path
+      d="M9 22V12h6v10"
+      fill={color === '#fff' ? '#1a1f26' : '#fff'}
+      opacity="0.3"
     />
   </Svg>
 );
@@ -102,12 +103,13 @@ export const ChartIcon = ({ size = 24, color = '#fff' }) => (
 
 export const SettingsIcon = ({ size = 24, color = '#fff' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Circle cx="12" cy="12" r="3" stroke={color} strokeWidth="2" />
     <Path
-      d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.66 5.66l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m5.66-5.66l4.24-4.24"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
+      d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"
+      fill={color}
+    />
+    <Path
+      d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+      fill={color}
     />
   </Svg>
 );
