@@ -67,10 +67,10 @@ export default function AlbumDetailScreen() {
     try {
       console.log('[AlbumDetail] 🎵 Loading songs for album:', albumId);
       const data = await getSongsByAlbumId(albumId);
-      console.log('[AlbumDetail] ✅ Loaded', data.length, 'songs');
+      console.log('[AlbumDetail]  Loaded', data.length, 'songs');
       setSongs(data);
     } catch (err) {
-      console.error('[AlbumDetail] ❌ Error loading songs:', err);
+      console.error('[AlbumDetail]  Error loading songs:', err);
       setError(err.message || 'No se pudieron cargar las canciones');
     } finally {
       setLoading(false);
@@ -109,7 +109,7 @@ export default function AlbumDetailScreen() {
       // Handle song finish
       sound.setOnPlaybackStatusUpdate((status) => {
         if (status.didJustFinish) {
-          console.log('[AlbumDetail] ⏹️ Song finished');
+          console.log('[AlbumDetail]  Song finished');
           // Auto-advance to next song
           if (index < songs.length - 1) {
             handlePlaySong(songs[index + 1], index + 1);
@@ -120,7 +120,7 @@ export default function AlbumDetailScreen() {
         }
       });
     } catch (err) {
-      console.error('[AlbumDetail] ❌ Error playing song:', err);
+      console.error('[AlbumDetail]  Error playing song:', err);
       Alert.alert('Error', 'No se pudo reproducir la canción');
     }
   };

@@ -306,16 +306,6 @@ class SleepTracker {
     score -= awakePenalty;
     console.log(`   Awake time penalty: -${awakePenalty.toFixed(1)} (${this.timeAwake.toFixed(2)}h awake)`);
 
-    // Penalizar por movimientos excesivos (muy suave o removida)
-    // Comentado: el acelerómetro siempre detecta algo, no penalizar duro por eso
-    // if (this.movements.length > 0) {
-    //   const avgMovement = this.movements.reduce((sum, m) => sum + m.magnitude, 0) / this.movements.length;
-    //   if (avgMovement > 1.5) {
-    //     score -= 5;
-    //     console.log(`   Movement penalty: -5 (avg: ${avgMovement.toFixed(2)})`);
-    //   }
-    // }
-
     // Permitir scores negativos para mostrar exceso de penalizaciones
     const finalScore = Math.min(100, Math.round(score));
     console.log(`   Final score: ${finalScore}`);
@@ -476,8 +466,8 @@ class SleepTracker {
       // Guardar todas las sesiones de prueba
       await AsyncStorage.setItem('sleep_sessions', JSON.stringify(testSessions));
       
-      console.log('[SleepTracker] ✅ Test data generated successfully!');
-      console.log('[SleepTracker] 📊 Sessions created:', testSessions.length);
+      console.log('[SleepTracker]  Test data generated successfully!');
+      console.log('[SleepTracker]  Sessions created:', testSessions.length);
       testSessions.forEach((session, index) => {
         const date = new Date(session.date);
         console.log(`  ${index + 1}. ${date.toLocaleDateString()}: Score ${session.score}, ${session.hoursSlept}h, ${session.nighttimePickups} pickups`);
@@ -485,7 +475,7 @@ class SleepTracker {
       
       return testSessions;
     } catch (error) {
-      console.error('[SleepTracker] ❌ Error generating test data:', error);
+      console.error('[SleepTracker]  Error generating test data:', error);
       return null;
     }
   }
