@@ -415,7 +415,10 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>Home</Text>
           <View style={styles.headerRightSection}>
-            <TouchableOpacity style={styles.recommendationsButton}>
+            <TouchableOpacity 
+              style={styles.recommendationsButton}
+              onPress={() => router.push('/recommendations')}
+            >
               <MenuIcon size={16} color={theme.TEXT_COLOR} />
               <Text style={styles.recommendationsText}>Recommendations</Text>
             </TouchableOpacity>
