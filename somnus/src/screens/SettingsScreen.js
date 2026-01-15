@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   Switch,
   TextInput,
   Image,
@@ -14,6 +13,8 @@ import { useRouter } from 'expo-router';
 import { useTheme } from '../hooks/useTheme';
 import { AnimatedBackground } from '../components/AnimatedBackground';
 import BottomNavBar from '../components/BottomNavBar';
+import CustomAlert from '../components/CustomAlert';
+import { useCustomAlert } from '../hooks/useCustomAlert';
 import { signOut, getCurrentUser, updateUserEmail, deleteUserAccount, updateUserProfile } from '../backend/authService';
 import sleepTracker from '../services/sleepTracker';
 
@@ -21,6 +22,7 @@ export default function SettingsScreen() {
   const { theme, isDark } = useTheme();
   const router = useRouter();
   const styles = createStyles(theme, isDark);
+  const { alertConfig, showAlert, hideAlert } = useCustomAlert();
 
   const [user, setUser] = useState(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
@@ -48,20 +50,26 @@ export default function SettingsScreen() {
       console.log('[SettingsScreen] 🎲 Generating test data...');
       await sleepTracker.generateTestData();
       
-      Alert.alert(
-        '✅ Datos de Prueba Generados',
+      showAlert(
+        'Datos de Prueba Generados',
         'Se han creado 30 días de datos de sueño para probar las gráficas.',
-        [{ text: 'OK' }]
+        [{ text: 'OK' }],
+        'success'
       );
     } catch (error) {
       console.error('[SettingsScreen] ❌ Error generating test data:', error);
-      Alert.alert('Error', 'No se pudieron generar los datos de prueba');
+      showAlert(
+        'Error',
+        'No se pudieron generar los datos de prueba',
+        [{ text: 'OK' }],
+        'danger'
+      );
     }
   };
 
   const handleDeleteAllData = async () => {
-    Alert.alert(
-      '⚠️ Eliminar Registros de Sueño',
+    showAlert(
+      'Eliminar Registros de Sueño',
       '¿Estás seguro de que quieres eliminar todas las sesiones de sueño guardadas?\n\n⚠️ Esta acción es PERMANENTE y no se puede deshacer.\n\n• Se borrarán todos tus registros de sueño\n• Se perderán tus estadísticas históricas\n• No podrás recuperar esta información',
       [
         {
@@ -76,24 +84,31 @@ export default function SettingsScreen() {
               console.log('[SettingsScreen] 🗑️ Clearing all sleep data...');
               await sleepTracker.clearAllData();
               
-              Alert.alert(
-                '✅ Datos Eliminados',
+              showAlert(
+                'Datos Eliminados',
                 'Todos los registros de sueño han sido eliminados correctamente.',
-                [{ text: 'OK' }]
+                [{ text: 'OK' }],
+                'success'
               );
             } catch (error) {
               console.error('[SettingsScreen] ❌ Error clearing data:', error);
-              Alert.alert('Error', 'No se pudieron eliminar los datos');
+              showAlert(
+                'Error',
+                'No se pudieron eliminar los datos',
+                [{ text: 'OK' }],
+                'danger'
+              );
             }
           },
         },
-      ]
+      ],
+      'warning'
     );
   };
 
   const handleDeleteAccount = async () => {
-    Alert.alert(
-      '⚠️ ELIMINAR CUENTA',
+    showAlert(
+      'ELIMINAR CUENTA',
       '¿Estás seguro de que quieres eliminar tu cuenta?\n\n⚠️ ADVERTENCIA: Esta acción es IRREVERSIBLE\n\n• Se eliminará toda tu información personal\n• Se borrarán TODOS tus registros de sueño\n• Perderás acceso a tu cuenta para siempre\n• No podrás recuperar ningún dato',
       [
         {
@@ -114,12 +129,17 @@ export default function SettingsScreen() {
               const result = await deleteUserAccount();
               
               if (!result.success) {
-                Alert.alert('Error', result.error || 'No se pudo eliminar la cuenta');
+                showAlert(
+                  'Error',
+                  result.error || 'No se pudo eliminar la cuenta',
+                  [{ text: 'OK' }],
+                  'danger'
+                );
                 return;
               }
               
-              Alert.alert(
-                '✅ Cuenta Eliminada',
+              showAlert(
+                'Cuenta Eliminada',
                 'Tu cuenta y todos tus datos han sido eliminados permanentemente.',
                 [
                   {
@@ -128,15 +148,22 @@ export default function SettingsScreen() {
                       router.replace('/login');
                     },
                   },
-                ]
+                ],
+                'success'
               );
             } catch (error) {
               console.error('[SettingsScreen] Error deleting account:', error);
-              Alert.alert('Error', 'No se pudo eliminar la cuenta');
+              showAlert(
+                'Error',
+                'No se pudo eliminar la cuenta',
+                [{ text: 'OK' }],
+                'danger'
+              );
             }
           },
         },
-      ]
+      ],
+      'danger'
     );
   };
 
@@ -149,11 +176,16 @@ export default function SettingsScreen() {
     // Validar formato de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(newEmail)) {
-      Alert.alert('Error', 'Por favor ingresa un email válido');
+      showAlert(
+        'Error',
+        'Por favor ingresa un email válido',
+        [{ text: 'OK' }],
+        'danger'
+      );
       return;
     }
 
-    Alert.alert(
+    showAlert(
       'Cambiar Email',
       `¿Deseas cambiar tu email a:\n${newEmail}?`,
       [
@@ -170,28 +202,41 @@ export default function SettingsScreen() {
               const result = await updateUserEmail(newEmail);
               
               if (!result.success) {
-                Alert.alert('Error', result.error || 'No se pudo cambiar el email');
+                showAlert(
+                  'Error',
+                  result.error || 'No se pudo cambiar el email',
+                  [{ text: 'OK' }],
+                  'danger'
+                );
                 return;
               }
               
-              Alert.alert(
-                '✅ Email Actualizado', 
-                'Tu email ha sido cambiado correctamente.\n\nPor favor verifica tu nuevo email para confirmar el cambio.'
+              showAlert(
+                'Email Actualizado',
+                'Tu email ha sido cambiado correctamente.\n\nPor favor verifica tu nuevo email para confirmar el cambio.',
+                [{ text: 'OK' }],
+                'success'
               );
               setShowEmailInput(false);
               loadUserData();
             } catch (error) {
               console.error('[SettingsScreen] Error changing email:', error);
-              Alert.alert('Error', 'No se pudo cambiar el email');
+              showAlert(
+                'Error',
+                'No se pudo cambiar el email',
+                [{ text: 'OK' }],
+                'danger'
+              );
             }
           },
         },
-      ]
+      ],
+      'warning'
     );
   };
 
   const handleLogout = async () => {
-    Alert.alert(
+    showAlert(
       'Cerrar Sesión',
       '¿Estás seguro de que quieres cerrar sesión?',
       [
@@ -208,11 +253,17 @@ export default function SettingsScreen() {
               router.replace('/login');
             } catch (error) {
               console.error('[SettingsScreen] Error logging out:', error);
-              Alert.alert('Error', 'No se pudo cerrar sesión');
+              showAlert(
+                'Error',
+                'No se pudo cerrar sesión',
+                [{ text: 'OK' }],
+                'danger'
+              );
             }
           },
         },
-      ]
+      ],
+      'warning'
     );
   };
 
@@ -395,6 +446,16 @@ export default function SettingsScreen() {
 
       {/* Bottom Navigation */}
       <BottomNavBar activeTab="settings" isDark={isDark} />
+
+      {/* Custom Alert */}
+      <CustomAlert
+        visible={alertConfig.visible}
+        onClose={hideAlert}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        buttons={alertConfig.buttons}
+        type={alertConfig.type}
+      />
     </>
   );
 }

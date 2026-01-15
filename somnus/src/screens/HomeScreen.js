@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Animated,
   Dimensions,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
@@ -15,6 +14,8 @@ import { useRouter } from 'expo-router';
 import { useTheme } from '../hooks/useTheme';
 import { AnimatedBackground } from '../components/AnimatedBackground';
 import BottomNavBar from '../components/BottomNavBar';
+import CustomAlert from '../components/CustomAlert';
+import { useCustomAlert } from '../hooks/useCustomAlert';
 import sleepTracker from '../services/sleepTracker';
 import {
   MoonIcon,
@@ -34,6 +35,7 @@ export default function HomeScreen() {
   const { theme, isDark, toggleTheme } = useTheme();
   const router = useRouter();
   const styles = createStyles(theme, isDark);
+  const { alertConfig, showAlert, hideAlert } = useCustomAlert();
 
   const [sleepData, setSleepData] = useState(null);
   const [isTracking, setIsTracking] = useState(false);
@@ -123,14 +125,20 @@ export default function HomeScreen() {
       await sleepTracker.startTracking();
       setIsTracking(true);
       console.log('[HomeScreen]  Tracking started successfully');
-      Alert.alert(
+      showAlert(
         'Tracking iniciado',
         'El seguimiento de sueño está activo. Deja tu celular cerca y descansa.',
-        [{ text: 'Ok' }]
+        [{ text: 'Ok' }],
+        'success'
       );
     } catch (error) {
       console.error('[HomeScreen]  Error starting tracking:', error);
-      Alert.alert('Error', 'No se pudo iniciar el tracking: ' + error.message);
+      showAlert(
+        'Error',
+        'No se pudo iniciar el tracking: ' + error.message,
+        [{ text: 'OK' }],
+        'danger'
+      );
     }
   };
 
@@ -143,7 +151,7 @@ export default function HomeScreen() {
       
       console.log('[HomeScreen]  Tracking stopped. Results:', result);
       
-      Alert.alert(
+      showAlert(
         '¡Sesión completada!',
         `Tu Night Score: ${result.score}\nHoras dormidas: ${result.hoursSlept}h\nCalidad: ${result.quality}`,
         [
@@ -151,19 +159,25 @@ export default function HomeScreen() {
             text: 'Ver detalles',
             onPress: () => loadSleepData(),
           },
-        ]
+        ],
+        'success'
       );
       
       loadSleepData();
     } catch (error) {
       console.error('[HomeScreen]  Error stopping tracking:', error);
-      Alert.alert('Error', 'No se pudo detener el tracking: ' + error.message);
+      showAlert(
+        'Error',
+        'No se pudo detener el tracking: ' + error.message,
+        [{ text: 'OK' }],
+        'danger'
+      );
     }
   };
 
   const handleClearAllData = async () => {
-    Alert.alert(
-      '⚠️ Limpiar Todos los Datos',
+    showAlert(
+      'Limpiar Todos los Datos',
       '¿Estás seguro de que quieres eliminar todas las sesiones de sueño guardadas?\n\nEsta acción no se puede deshacer.',
       [
         {
@@ -178,23 +192,30 @@ export default function HomeScreen() {
               console.log('[HomeScreen] 🗑️ Clearing all data...');
               await sleepTracker.clearAllData();
               
-              Alert.alert(
-                '✅ Datos Eliminados',
+              showAlert(
+                'Datos Eliminados',
                 'Todos los datos han sido eliminados correctamente.',
                 [
                   {
                     text: 'OK',
                     onPress: () => loadSleepData(),
                   },
-                ]
+                ],
+                'success'
               );
             } catch (error) {
               console.error('[HomeScreen] ❌ Error clearing data:', error);
-              Alert.alert('Error', 'No se pudieron eliminar los datos');
+              showAlert(
+                'Error',
+                'No se pudieron eliminar los datos',
+                [{ text: 'OK' }],
+                'danger'
+              );
             }
           },
         },
-      ]
+      ],
+      'warning'
     );
   };
 
@@ -509,6 +530,16 @@ export default function HomeScreen() {
 
       {/* Barra de navegación inferior */}
       <BottomNavBar activeTab="home" isDark={isDark} />
+
+      {/* Custom Alert */}
+      <CustomAlert
+        visible={alertConfig.visible}
+        onClose={hideAlert}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        buttons={alertConfig.buttons}
+        type={alertConfig.type}
+      />
     </>
   );
 }

@@ -9,11 +9,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
-  Alert,
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { useTheme } from '../hooks/useTheme';
 import { AnimatedBackground } from '../components/AnimatedBackground';
+import CustomAlert from '../components/CustomAlert';
+import { useCustomAlert } from '../hooks/useCustomAlert';
 import { createLoginStyles } from './styles/LoginScreen.styles';
 import { signIn } from '../backend/authService';
 import { getMusicOnboardingStatus } from '../backend/musicService';
@@ -23,6 +24,7 @@ export default function LoginScreen() {
   const styles = createLoginStyles(theme);
   const switchAnim = useRef(new Animated.Value(isDark ? 1 : 0)).current;
   const router = useRouter();
+  const { alertConfig, showAlert, hideAlert } = useCustomAlert();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -42,19 +44,33 @@ export default function LoginScreen() {
     });
 
     if (!result.success) {
-      Alert.alert('Error de inicio', result.error);
+      showAlert(
+        'Error de inicio',
+        result.error,
+        [{ text: 'OK', onPress: () => {} }],
+        'danger'
+      );
       setLoading(false);
       return;
     }
 
     const onboardingDone = await getMusicOnboardingStatus().catch(() => false);
 
-    Alert.alert('Bienvenido', 'Inicio de sesión correcto');
-    if (onboardingDone) {
-      router.replace('/(tabs)');
-    } else {
-      router.replace('/music-onboarding');
-    }
+    showAlert(
+      '¡Bienvenido!',
+      'Inicio de sesión correcto',
+      [{
+        text: 'Continuar',
+        onPress: () => {
+          if (onboardingDone) {
+            router.replace('/(tabs)');
+          } else {
+            router.replace('/music-onboarding');
+          }
+        }
+      }],
+      'success'
+    );
     setLoading(false);
   };
 
@@ -180,6 +196,15 @@ export default function LoginScreen() {
         </View>
       </ScrollView>
       </KeyboardAvoidingView>
+
+      <CustomAlert
+        visible={alertConfig.visible}
+        onClose={hideAlert}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        buttons={alertConfig.buttons}
+        type={alertConfig.type}
+      />
     </>
   );
 }
