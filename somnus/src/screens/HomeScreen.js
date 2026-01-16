@@ -232,6 +232,13 @@ export default function HomeScreen() {
     return '#f87171'; // Rojo - mal sueño
   };
 
+  const getScoreLabel = (score) => {
+    if (score >= 85) return 'Excelente';
+    if (score >= 70) return 'Buena';
+    if (score >= 50) return 'Regular';
+    return 'Baja';
+  };
+
   const getScoreSegments = (score) => {
     const segments = [];
     if (score >= 80) {
@@ -290,8 +297,8 @@ export default function HomeScreen() {
     const pickupPercent = (pickupHours / totalHours) * 100;
     
     // Configuración del círculo SVG
-    const size = 240;
-    const strokeWidth = 20;
+    const size = 210;
+    const strokeWidth = 14;
     const radius = (size - strokeWidth) / 2;
     const circumference = 2 * Math.PI * radius;
 
@@ -330,7 +337,7 @@ export default function HomeScreen() {
             cx={size / 2}
             cy={size / 2}
             r={radius}
-            stroke={theme.SECONDARY_COLOR}
+            stroke={theme.BORDER_COLOR}
             strokeWidth={strokeWidth}
             fill="transparent"
           />
@@ -351,7 +358,7 @@ export default function HomeScreen() {
               extrapolate: 'clamp',
             })}
           </Animated.Text>
-          <Text style={styles.scoreLabel}>Night Score</Text>
+          <Text style={styles.scoreLabel}>{getScoreLabel(score)}</Text>
         </View>
       </View>
     );
@@ -442,10 +449,15 @@ export default function HomeScreen() {
 
         {/* Score */}
         <View style={styles.scoreSection}>
-          <Text style={styles.scoreTitle}>Night Score</Text>
+          <View style={styles.scoreHeaderRow}>
+            <Text style={styles.scoreTitle}>Night Score</Text>
+            <Text style={styles.scoreMeta}>Última noche</Text>
+          </View>
           {renderCircularScore()}
           <Text style={styles.scoreHint}>Basado en horas dormidas, despertares y pickups.</Text>
         </View>
+
+        <View style={styles.divider} />
 
         {/* Métricas */}
         <View style={styles.metricsList}>
@@ -576,14 +588,14 @@ function createStyles(theme, isDark) {
       gap: 8,
     },
     title: {
-      fontSize: 28,
+      fontSize: 26,
       fontWeight: '800',
       color: theme.TEXT_COLOR,
-      letterSpacing: -0.5,
+      letterSpacing: -0.3,
     },
     subtitle: {
-      marginTop: 4,
-      fontSize: 13,
+      marginTop: 2,
+      fontSize: 12,
       fontWeight: '500',
       color: theme.TEXT_COLOR + '99',
     },
@@ -620,11 +632,25 @@ function createStyles(theme, isDark) {
       paddingVertical: 18,
       paddingHorizontal: 16,
     },
+    scoreHeaderRow: {
+      width: '100%',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 6,
+      paddingHorizontal: 4,
+    },
     scoreTitle: {
-      fontSize: 16,
+      fontSize: 14,
       fontWeight: '700',
       color: theme.TEXT_COLOR,
-      marginBottom: 10,
+      letterSpacing: 0.6,
+      textTransform: 'uppercase',
+    },
+    scoreMeta: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: theme.TEXT_COLOR + '80',
     },
     scoreHint: {
       textAlign: 'center',
@@ -633,8 +659,8 @@ function createStyles(theme, isDark) {
       marginTop: 8,
     },
     scoreCircleContainer: {
-      width: 240,
-      height: 240,
+      width: 210,
+      height: 210,
       justifyContent: 'center',
       alignItems: 'center',
       position: 'relative',
@@ -646,10 +672,10 @@ function createStyles(theme, isDark) {
     },
     scoreCircle: {
       position: 'absolute',
-      width: 240,
-      height: 240,
-      borderRadius: 120,
-      borderWidth: 16,
+      width: 210,
+      height: 210,
+      borderRadius: 105,
+      borderWidth: 12,
       borderColor: theme.SECONDARY_COLOR,
     },
     scoreSegment: {
@@ -665,33 +691,32 @@ function createStyles(theme, isDark) {
       borderLeftWidth: 0,
     },
     scoreInner: {
-      width: 180,
-      height: 180,
-      borderRadius: 90,
-      backgroundColor: isDark ? '#1a1f26' : '#ffffff',
+      width: 150,
+      height: 150,
+      borderRadius: 75,
+      backgroundColor: isDark ? '#141922' : '#ffffff',
       justifyContent: 'center',
       alignItems: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.15,
-      shadowRadius: 12,
-      elevation: 8,
+      borderWidth: 1,
+      borderColor: theme.BORDER_COLOR,
     },
     scoreNumber: {
-      fontSize: 64,
+      fontSize: 56,
       fontWeight: '900',
-      letterSpacing: -2,
+      letterSpacing: -1.5,
     },
     scoreLabel: {
-      fontSize: 16,
-      fontWeight: '600',
+      fontSize: 14,
+      fontWeight: '700',
       color: theme.TEXT_COLOR + '99',
-      marginTop: 4,
+      marginTop: 2,
+      textTransform: 'uppercase',
+      letterSpacing: 0.8,
     },
 
     // Métricas
     metricsList: {
-      marginTop: 10,
+      marginTop: 6,
       marginHorizontal: 16,
       borderTopWidth: 1,
       borderTopColor: theme.BORDER_COLOR,
@@ -722,6 +747,12 @@ function createStyles(theme, isDark) {
     metricValue: {
       fontSize: 16,
       fontWeight: '700',
+    },
+    divider: {
+      height: 1,
+      backgroundColor: theme.BORDER_COLOR,
+      marginHorizontal: 16,
+      marginTop: 6,
     },
 
     // Botones
