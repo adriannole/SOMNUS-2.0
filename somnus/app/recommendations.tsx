@@ -98,10 +98,48 @@ const fetchRedisRecommendations = async () => {
     if (!data?.result) return null;
 
     const parsed = typeof data.result === 'string' ? JSON.parse(data.result) : data.result;
+    console.log('[Recommendations]  Datos cargados desde Redis cache');
     return Array.isArray(parsed) ? parsed : null;
   } catch (error) {
     console.warn('[Recommendations] Redis fetch failed', error);
     return null;
+  }
+};
+
+const saveRedisRecommendations = async (recommendations: any[]) => {
+  if (!REDIS_REST_URL || !REDIS_REST_TOKEN) {
+    console.warn('[Recommendations]  Redis no configurado, saltando guardado');
+    return false;
+  }
+
+  try {
+    console.log('[Recommendations]  Guardando recomendaciones en Redis...');
+    
+    // Guardar con expiración de 24 horas (86400 segundos)
+    const res = await fetch(`${REDIS_REST_URL}/set/recommendation_vectors`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${REDIS_REST_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        value: JSON.stringify(recommendations),
+        ex: 86400, // Expira en 24 horas
+      }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error('[Recommendations]  Error guardando en Redis:', res.status, errText);
+      return false;
+    }
+
+    const result = await res.json();
+    console.log('[Recommendations]  Guardado exitoso en Redis:', result);
+    return true;
+  } catch (error) {
+    console.error('[Recommendations]  Redis save failed:', error);
+    return false;
   }
 };
 
@@ -214,8 +252,18 @@ export default function RecommendationsScreen() {
       setSleepData(latest);
 
       const userVector = buildUserVector(latest);
-      const redisVectors = await fetchRedisRecommendations();
-      const source = redisVectors ?? DEFAULT_RECOMMENDATIONS;
+      let redisVectors = await fetchRedisRecommendations();
+      
+      // Si no hay datos en Redis, usar defaults y guardarlos
+      if (!redisVectors) {
+        console.log('[Recommendations]  Sin cache, usando DEFAULT_RECOMMENDATIONS');
+        redisVectors = DEFAULT_RECOMMENDATIONS;
+        
+        // Guardar en Redis para próxima vez
+        await saveRedisRecommendations(DEFAULT_RECOMMENDATIONS);
+      }
+
+      const source = redisVectors;
 
       const scored = source
         .map((rec: any) => {

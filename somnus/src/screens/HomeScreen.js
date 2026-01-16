@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useTheme } from '../hooks/useTheme';
 import { AnimatedBackground } from '../components/AnimatedBackground';
 import BottomNavBar from '../components/BottomNavBar';
@@ -44,10 +44,17 @@ export default function HomeScreen() {
 
   const scoreAnim = useRef(new Animated.Value(0)).current;
 
+  // Recargar datos cada vez que la pantalla obtiene foco
+  useFocusEffect(
+    useCallback(() => {
+      console.log('[HomeScreen] 🔄 Screen focused, reloading data...');
+      loadSleepData();
+      checkTrackingStatus();
+      return () => {};
+    }, [])
+  );
+
   useEffect(() => {
-    loadSleepData();
-    checkTrackingStatus();
-    
     // Iniciar monitoreo de inactividad SOLO si está en modo auto
     if (trackingMode === 'auto') {
       console.log('[HomeScreen]  Initializing auto-tracking monitor...');
