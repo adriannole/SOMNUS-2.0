@@ -415,64 +415,65 @@ export default function HomeScreen() {
     <>
       <AnimatedBackground isDark={isDark} theme={theme} />
       <ScrollView style={styles.screen} showsVerticalScrollIndicator={false}>
-        {/* Header con título y botón de recomendaciones */}
+        {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Home</Text>
-          <View style={styles.headerRightSection}>
-            <TouchableOpacity 
-              style={styles.recommendationsButton}
+          <View>
+            <Text style={styles.title}>Resumen</Text>
+            <Text style={styles.subtitle}>Tu sueño de hoy</Text>
+          </View>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={styles.recommendationsPill}
               onPress={() => router.push('/recommendations')}
             >
-              <MenuIcon size={16} color={theme.TEXT_COLOR} />
-              <Text style={styles.recommendationsText}>Recommendations</Text>
+              <MenuIcon size={14} color={theme.TEXT_COLOR} />
+              <Text style={styles.recommendationsText}>Recomendaciones</Text>
             </TouchableOpacity>
-            
-            {/* Toggle Modo Oscuro/Claro */}
-            <TouchableOpacity 
-              style={styles.themeToggle}
-              onPress={toggleTheme}
-            >
+
+            <TouchableOpacity style={styles.iconButton} onPress={toggleTheme}>
               {isDark ? (
-                <SunIcon size={18} color={theme.TEXT_COLOR} />
+                <SunIcon size={16} color={theme.TEXT_COLOR} />
               ) : (
-                <MoonIconDark size={18} color={theme.TEXT_COLOR} />
+                <MoonIconDark size={16} color={theme.TEXT_COLOR} />
               )}
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Score circular */}
+        {/* Score */}
         <View style={styles.scoreSection}>
+          <Text style={styles.scoreTitle}>Night Score</Text>
           {renderCircularScore()}
+          <Text style={styles.scoreHint}>Basado en horas dormidas, despertares y pickups.</Text>
         </View>
 
-        {/* Métricas de sueño */}
-        <View style={styles.metricsContainer}>
+        {/* Métricas */}
+        <View style={styles.metricsList}>
           <View style={styles.metricRow}>
-            <View style={styles.metricIcon}>
-              <MoonIcon size={20} color={theme.TEXT_COLOR} />
+            <View style={styles.metricLeft}>
+              <View style={[styles.metricDot, { backgroundColor: '#4ade80' }]} />
+              <Text style={styles.metricLabel}>Horas dormidas</Text>
             </View>
-            <Text style={styles.metricLabel}>Hours of sleep</Text>
             <Text style={[styles.metricValue, { color: '#4ade80' }]}>
               {sleepData.hoursSlept}h
             </Text>
           </View>
 
           <View style={styles.metricRow}>
-            <View style={styles.metricIcon}>
-              <EyeIcon size={20} color={theme.TEXT_COLOR} />
+            <View style={styles.metricLeft}>
+              <View style={[styles.metricDot, { backgroundColor: '#fbbf24' }]} />
+              <Text style={styles.metricLabel}>Tiempo despierto</Text>
             </View>
-            <Text style={styles.metricLabel}>Time awake</Text>
             <Text style={[styles.metricValue, { color: '#fbbf24' }]}>
               {sleepData.timeAwake}h
             </Text>
           </View>
 
           <View style={styles.metricRow}>
-            <View style={styles.metricIcon}>
-              <PhoneIcon size={20} color={theme.TEXT_COLOR} />
+            <View style={styles.metricLeft}>
+              <View style={[styles.metricDot, { backgroundColor: '#f87171' }]} />
+              <Text style={styles.metricLabel}>Pickups</Text>
             </View>
-            <Text style={styles.metricLabel}>Nighttime pickups</Text>
             <Text style={[styles.metricValue, { color: '#f87171' }]}>
               {sleepData.nighttimePickups}
             </Text>
@@ -526,8 +527,12 @@ export default function HomeScreen() {
           </TouchableOpacity>
         )}
 
-        {/* Indicador / Control según el modo */}
+        {/* Semana */}
         <View style={styles.weekSection}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Últimos 7 días</Text>
+            <Text style={styles.sectionSubtitle}>Horas dormidas y calidad</Text>
+          </View>
           {renderWeekChart()}
         </View>
 
@@ -563,38 +568,45 @@ function createStyles(theme, isDark) {
       alignItems: 'center',
       paddingHorizontal: 20,
       paddingTop: 50,
-      paddingBottom: 20,
+      paddingBottom: 10,
     },
-    headerRightSection: {
+    headerActions: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
+      gap: 8,
     },
     title: {
-      fontSize: 32,
+      fontSize: 28,
       fontWeight: '800',
       color: theme.TEXT_COLOR,
+      letterSpacing: -0.5,
     },
-    recommendationsButton: {
+    subtitle: {
+      marginTop: 4,
+      fontSize: 13,
+      fontWeight: '500',
+      color: theme.TEXT_COLOR + '99',
+    },
+    recommendationsPill: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
-      paddingHorizontal: 14,
+      paddingHorizontal: 12,
       paddingVertical: 8,
       backgroundColor: theme.SECONDARY_COLOR,
-      borderRadius: 12,
+      borderRadius: 999,
       borderWidth: 1,
       borderColor: theme.BORDER_COLOR,
     },
     recommendationsText: {
-      fontSize: 12,
+      fontSize: 11,
       fontWeight: '600',
       color: theme.TEXT_COLOR,
     },
-    themeToggle: {
-      width: 40,
-      height: 40,
-      borderRadius: 10,
+    iconButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 12,
       backgroundColor: theme.SECONDARY_COLOR,
       justifyContent: 'center',
       alignItems: 'center',
@@ -605,7 +617,20 @@ function createStyles(theme, isDark) {
     // Score circular
     scoreSection: {
       alignItems: 'center',
-      paddingVertical: 30,
+      paddingVertical: 18,
+      paddingHorizontal: 16,
+    },
+    scoreTitle: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: theme.TEXT_COLOR,
+      marginBottom: 10,
+    },
+    scoreHint: {
+      textAlign: 'center',
+      fontSize: 12,
+      color: theme.TEXT_COLOR + '99',
+      marginTop: 8,
     },
     scoreCircleContainer: {
       width: 240,
@@ -665,38 +690,37 @@ function createStyles(theme, isDark) {
     },
 
     // Métricas
-    metricsContainer: {
-      paddingHorizontal: 20,
-      gap: 14,
-      marginBottom: 24,
+    metricsList: {
+      marginTop: 10,
+      marginHorizontal: 16,
+      borderTopWidth: 1,
+      borderTopColor: theme.BORDER_COLOR,
     },
     metricRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: theme.SECONDARY_COLOR,
-      paddingVertical: 14,
-      paddingHorizontal: 16,
-      borderRadius: 16,
-      borderWidth: 1,
-      borderColor: theme.BORDER_COLOR,
+      justifyContent: 'space-between',
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.BORDER_COLOR,
     },
-    metricIcon: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: isDark ? '#2a3142' : '#e5e7eb',
-      justifyContent: 'center',
+    metricLeft: {
+      flexDirection: 'row',
       alignItems: 'center',
-      marginRight: 12,
+      gap: 10,
+    },
+    metricDot: {
+      width: 10,
+      height: 10,
+      borderRadius: 999,
     },
     metricLabel: {
-      flex: 1,
-      fontSize: 15,
+      fontSize: 13,
       fontWeight: '600',
       color: theme.TEXT_COLOR,
     },
     metricValue: {
-      fontSize: 17,
+      fontSize: 16,
       fontWeight: '700',
     },
 
@@ -729,8 +753,23 @@ function createStyles(theme, isDark) {
 
     // Gráfica semanal
     weekSection: {
-      paddingHorizontal: 20,
+      paddingHorizontal: 16,
+      marginTop: 16,
       marginBottom: 20,
+    },
+    sectionHeader: {
+      marginBottom: 10,
+      paddingHorizontal: 4,
+    },
+    sectionTitle: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: theme.TEXT_COLOR,
+    },
+    sectionSubtitle: {
+      marginTop: 4,
+      fontSize: 12,
+      color: theme.TEXT_COLOR + '99',
     },
     weekChartContainer: {
       flexDirection: 'row',
@@ -738,7 +777,7 @@ function createStyles(theme, isDark) {
       alignItems: 'flex-end',
       height: 160,
       paddingVertical: 16,
-      paddingHorizontal: 8,
+      paddingHorizontal: 10,
       backgroundColor: theme.SECONDARY_COLOR,
       borderRadius: 20,
       borderWidth: 1,
