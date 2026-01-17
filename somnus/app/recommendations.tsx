@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -98,8 +98,12 @@ const fetchRedisRecommendations = async () => {
     if (!data?.result) return null;
 
     const parsed = typeof data.result === 'string' ? JSON.parse(data.result) : data.result;
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      console.warn('[Recommendations]  Redis cache vacío o inválido, usando defaults');
+      return null;
+    }
     console.log('[Recommendations]  Datos cargados desde Redis cache');
-    return Array.isArray(parsed) ? parsed : null;
+    return parsed;
   } catch (error) {
     console.warn('[Recommendations] Redis fetch failed', error);
     return null;
@@ -233,6 +237,7 @@ export default function RecommendationsScreen() {
   const [aiRecommendations, setAiRecommendations] = useState<any[]>([]);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const didLoadRef = useRef(false);
 
   const toggleExpand = (id: string) => {
     const newExpanded = new Set(expandedCards);
@@ -246,6 +251,8 @@ export default function RecommendationsScreen() {
 
   useEffect(() => {
     const loadRecommendations = async () => {
+      if (didLoadRef.current) return;
+      didLoadRef.current = true;
       setLoading(true);
       const latest = (await sleepTracker.getLatestSession()) ?? {
         score: 0,
