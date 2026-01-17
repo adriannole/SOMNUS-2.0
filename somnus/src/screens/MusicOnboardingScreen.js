@@ -259,7 +259,7 @@ export default function MusicOnboardingScreen() {
     return (
       <View style={styles.center}>
         <ActivityIndicator color={theme.ACCENT_COLOR} size="large" />
-        <Text style={styles.loadingText}>Cargando musica...</Text>
+        <Text style={styles.loadingText}>Cargando...</Text>
       </View>
     );
   }

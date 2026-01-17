@@ -130,6 +130,10 @@ const saveRedisRecommendations = async (recommendations: any[]) => {
 
     if (!res.ok) {
       const errText = await res.text();
+      if (res.status === 403 && /NOPERM/i.test(errText)) {
+        console.warn('[Recommendations]  Redis sin permisos de escritura. Usa un token con permisos SET.');
+        return false;
+      }
       console.error('[Recommendations]  Error guardando en Redis:', res.status, errText);
       return false;
     }
@@ -186,7 +190,7 @@ ${topRecommendations
 Genera 3 recomendaciones CORTAS y MUY ESPECÍFICAS para este usuario (máximo 1-2 líneas cada una). 
 Sé conciso y directo. Incluye exactamente qué hacer.
 
-Formato: Escribe cada recomendación en una línea empezando con "1.", "2." o "3."`;
+Formato: Escribe cada recomendación en una línea empezando con "1.", "2." o "3." pero no vuelvas a poner aqui tienes estas recomendaciones o estas 3 recomendaciones`;
 
   try {
     console.log('[Recommendations] Calling Gemini API with top scores:', topRecommendations.map(r => r.score.toFixed(3)));
