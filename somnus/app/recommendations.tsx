@@ -1,3 +1,16 @@
+/**
+ * RecommendationsScreen
+ * ----------------------------------------------------------
+ * Pantalla que genera recomendaciones de sueño en base a:
+ * 1) Última sesión registrada en sleepTracker
+ * 2) Recomendaciones base (DEFAULT_RECOMMENDATIONS) o cache en Redis
+ * 3) Recomendaciones personalizadas opcionales con Gemini (IA)
+ *
+ * Flujo general:
+ * - Carga última sesión -> construye vector usuario -> puntúa recomendaciones -> muestra top
+ * - Si hay API key de Gemini, genera 3 recomendaciones cortas extra (AI)
+ */
+
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
@@ -8,14 +21,25 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+
 import { useTheme } from '../src/hooks/useTheme';
 import { AnimatedBackground } from '../src/components/AnimatedBackground';
 import sleepTracker from '../src/services/sleepTracker';
 
+/**
+ * Variables de entorno (Expo):
+ * - GEMINI_API_KEY: habilita recomendaciones con IA
+ * - REDIS_REST_URL / TOKEN: habilita cache para vectores de recomendaciones
+ */
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
 const REDIS_REST_URL = process.env.EXPO_PUBLIC_REDIS_REST_URL;
 const REDIS_REST_TOKEN = process.env.EXPO_PUBLIC_REDIS_REST_TOKEN;
 
+/**
+ * Recomendaciones por defecto (fallback):
+ * - Se usan si Redis no devuelve datos válidos
+ * - Cada recomendación trae un "vector" para calcular similitud con el usuario
+ */
 const DEFAULT_RECOMMENDATIONS = [
   {
     id: 'regular-schedule',
@@ -61,21 +85,38 @@ const DEFAULT_RECOMMENDATIONS = [
   },
 ];
 
+/**
+ * Normaliza un vector para que tenga magnitud 1.
+ * Esto ayuda a que el producto punto mida "similitud" de forma más estable.
+ */
 const normalizeVector = (vec: number[]) => {
   const magnitude = Math.sqrt(vec.reduce((sum, value) => sum + value * value, 0)) || 1;
   return vec.map((value) => value / magnitude);
 };
 
+/**
+ * Producto punto entre dos vectores.
+ * Se usa como puntuación (similitud) entre vector usuario y vector recomendación.
+ */
 const dotProduct = (a: number[], b: number[]) =>
   a.reduce((sum, value, idx) => sum + value * (b[idx] ?? 0), 0);
 
+/**
+ * Construye el vector del usuario a partir de su última sesión de sueño.
+ * Se normaliza para poder compararlo con los vectores de recomendaciones.
+ *
+ * Ejes (ejemplo):
+ * - score/100        -> calidad de sueño
+ * - hours/8          -> horas dormidas (ideal aprox 8)
+ * - awake/2          -> tiempo despierto (escala simple)
+ * - pickups/10       -> pickups nocturnos (escala simple)
+ */
 const buildUserVector = (sleepData: any) => {
   const score = sleepData?.score ?? 0;
   const hoursSlept = sleepData?.hoursSlept ?? 0;
   const timeAwake = sleepData?.timeAwake ?? 0;
   const pickups = sleepData?.nighttimePickups ?? 0;
 
-  // Normalización básica para producto punto
   return normalizeVector([
     score / 100,
     hoursSlept / 8,
@@ -84,6 +125,10 @@ const buildUserVector = (sleepData: any) => {
   ]);
 };
 
+/**
+ * Intenta cargar vectores de recomendaciones desde Redis (cache).
+ * Si no está configurado Redis o si falla, devuelve null para usar defaults.
+ */
 const fetchRedisRecommendations = async () => {
   if (!REDIS_REST_URL || !REDIS_REST_TOKEN) return null;
 
@@ -94,14 +139,19 @@ const fetchRedisRecommendations = async () => {
         Authorization: `Bearer ${REDIS_REST_TOKEN}`,
       },
     });
+
     const data = await res.json();
     if (!data?.result) return null;
 
+    // Redis puede devolver string JSON o un objeto ya parseado
     const parsed = typeof data.result === 'string' ? JSON.parse(data.result) : data.result;
+
+    // Si el cache viene vacío o inválido, se usa fallback
     if (!Array.isArray(parsed) || parsed.length === 0) {
       console.warn('[Recommendations]  Redis cache vacío o inválido, usando defaults');
       return null;
     }
+
     console.log('[Recommendations]  Datos cargados desde Redis cache');
     return parsed;
   } catch (error) {
@@ -110,6 +160,10 @@ const fetchRedisRecommendations = async () => {
   }
 };
 
+/**
+ * Guarda recomendaciones en Redis para reutilizarlas luego.
+ * Tiene expiración de 24h para no guardar datos viejos indefinidamente.
+ */
 const saveRedisRecommendations = async (recommendations: any[]) => {
   if (!REDIS_REST_URL || !REDIS_REST_TOKEN) {
     console.warn('[Recommendations]  Redis no configurado, saltando guardado');
@@ -118,8 +172,7 @@ const saveRedisRecommendations = async (recommendations: any[]) => {
 
   try {
     console.log('[Recommendations]  Guardando recomendaciones en Redis...');
-    
-    // Guardar con expiración de 24 horas (86400 segundos)
+
     const res = await fetch(`${REDIS_REST_URL}/set/recommendation_vectors`, {
       method: 'POST',
       headers: {
@@ -128,10 +181,11 @@ const saveRedisRecommendations = async (recommendations: any[]) => {
       },
       body: JSON.stringify({
         value: JSON.stringify(recommendations),
-        ex: 86400, // Expira en 24 horas
+        ex: 86400, // 24 horas
       }),
     });
 
+    // Manejo de errores comunes (ej: token sin permiso SET)
     if (!res.ok) {
       const errText = await res.text();
       if (res.status === 403 && /NOPERM/i.test(errText)) {
@@ -151,16 +205,24 @@ const saveRedisRecommendations = async (recommendations: any[]) => {
   }
 };
 
+/**
+ * Convierte el texto devuelto por Gemini en un arreglo de recomendaciones.
+ * Se espera formato tipo:
+ * 1. ...
+ * 2. ...
+ * 3. ...
+ */
 const parseAIRecommendations = (text: string) => {
   if (!text) return [];
-  
+
+  // Divide por "1." "2." "3." o bullets (- •)
   const items = text.split(/(?:^|\n)(?:\d+\.|[-•])\s+/).filter(item => item.trim());
-  
+
   return items.map((item, idx) => {
     const lines = item.trim().split('\n');
     const title = lines[0]?.replace(/\*+/g, '').trim() || `Recomendación ${idx + 1}`;
     const description = lines.slice(1).join('\n').replace(/\*+/g, '').trim();
-    
+
     return {
       id: `ai-${idx}`,
       title,
@@ -170,6 +232,11 @@ const parseAIRecommendations = (text: string) => {
   });
 };
 
+/**
+ * Llama a Gemini para generar recomendaciones cortas personalizadas.
+ * - Usa el sleepData del usuario + top recomendaciones calculadas por vector similarity
+ * - Si no hay API key, retorna null y la app sigue sin IA
+ */
 const generateGeminiAdvice = async (sleepData: any, recommendations: any[]) => {
   if (!GEMINI_API_KEY) {
     console.log('[Recommendations] No Gemini API key');
@@ -180,6 +247,7 @@ const generateGeminiAdvice = async (sleepData: any, recommendations: any[]) => {
   const baseScore = sleepData?.score ?? 0;
   const severity = baseScore < 40 ? 'severa' : baseScore < 60 ? 'moderada' : 'leve';
 
+  // Prompt: se pide respuesta directa en 3 líneas (1.,2.,3.)
   const prompt = `Eres un especialista en medicina del sueño. Con base en estos datos del usuario:
 - Puntaje de calidad: ${baseScore}/100 (${severity})
 - Horas dormidas: ${sleepData?.hoursSlept ?? 0}h
@@ -197,20 +265,22 @@ Sé conciso y directo. Incluye exactamente qué hacer.
 Formato: Escribe cada recomendación en una línea empezando con "1.", "2." o "3." pero no vuelvas a poner aqui tienes estas recomendaciones o estas 3 recomendaciones`;
 
   try {
-    console.log('[Recommendations] Calling Gemini API with top scores:', topRecommendations.map(r => r.score.toFixed(3)));
+    console.log(
+      '[Recommendations] Calling Gemini API with top scores:',
+      topRecommendations.map(r => r.score.toFixed(3))
+    );
+
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ 
-            parts: [{ text: prompt }] 
-          }],
+          contents: [{ parts: [{ text: prompt }] }],
         }),
       }
     );
-    
+
     if (!res.ok) {
       const errText = await res.text();
       console.warn('[Recommendations] Gemini error', res.status, errText);
@@ -219,6 +289,8 @@ Formato: Escribe cada recomendación en una línea empezando con "1.", "2." o "3
 
     const json = await res.json();
     console.log('[Recommendations] Gemini response:', JSON.stringify(json).substring(0, 200));
+
+    // Extrae el texto de respuesta del primer candidato
     const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
     return text || null;
   } catch (error) {
@@ -228,17 +300,41 @@ Formato: Escribe cada recomendación en una línea empezando con "1.", "2." o "3
 };
 
 export default function RecommendationsScreen() {
+  // Tema visual (colores) y booleano isDark
   const { theme, isDark } = useTheme();
+
+  // Router para navegar / volver atrás
   const router = useRouter();
+
+  // Estilos dependientes del tema: se recalculan solo si cambia theme o isDark
   const styles = useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
+  // Estado con la última sesión de sueño del usuario
   const [sleepData, setSleepData] = useState<any>(null);
+
+  // Recomendaciones basadas en vectores (top 4)
   const [recommendations, setRecommendations] = useState<any[]>([]);
+
+  // Recomendaciones generadas por IA (Gemini)
   const [aiRecommendations, setAiRecommendations] = useState<any[]>([]);
+
+  // Controla qué tarjetas están expandidas en UI
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
+
+  // Controla pantalla de carga
   const [loading, setLoading] = useState(true);
+
+  /**
+   * didLoadRef:
+   * Evita ejecutar loadRecommendations 2 veces
+   * (útil en dev con React Strict Mode / recargas)
+   */
   const didLoadRef = useRef(false);
 
+  /**
+   * Expande/contrae una tarjeta por id.
+   * Se usa Set para acceso rápido (has/add/delete).
+   */
   const toggleExpand = (id: string) => {
     const newExpanded = new Set(expandedCards);
     if (newExpanded.has(id)) {
@@ -251,9 +347,13 @@ export default function RecommendationsScreen() {
 
   useEffect(() => {
     const loadRecommendations = async () => {
+      // Evita re-ejecuciones
       if (didLoadRef.current) return;
       didLoadRef.current = true;
+
       setLoading(true);
+
+      // 1) Cargar última sesión (si no existe, usar valores por defecto)
       const latest = (await sleepTracker.getLatestSession()) ?? {
         score: 0,
         hoursSlept: 0,
@@ -262,20 +362,20 @@ export default function RecommendationsScreen() {
       };
       setSleepData(latest);
 
+      // 2) Construir vector usuario y obtener recomendaciones (Redis o defaults)
       const userVector = buildUserVector(latest);
       let redisVectors = await fetchRedisRecommendations();
-      
-      // Si no hay datos en Redis, usar defaults y guardarlos
+
+      // Si no hay cache, usar defaults y tratar de guardarlos en Redis
       if (!redisVectors) {
         console.log('[Recommendations]  Sin cache, usando DEFAULT_RECOMMENDATIONS');
         redisVectors = DEFAULT_RECOMMENDATIONS;
-        
-        // Guardar en Redis para próxima vez
         await saveRedisRecommendations(DEFAULT_RECOMMENDATIONS);
       }
 
       const source = redisVectors;
 
+      // 3) Puntuar recomendaciones y quedarnos con top 4
       const scored = source
         .map((rec: any) => {
           const score = dotProduct(userVector, normalizeVector(rec.vector || []));
@@ -286,17 +386,22 @@ export default function RecommendationsScreen() {
 
       setRecommendations(scored);
 
+      // 4) (Opcional) Pedir a Gemini 3 recomendaciones extra personalizadas
       const advice = await generateGeminiAdvice(latest, scored);
       if (advice) {
         const parsed = parseAIRecommendations(advice);
         setAiRecommendations(parsed);
       }
+
       setLoading(false);
     };
 
     loadRecommendations();
   }, []);
 
+  /**
+   * Pantalla de carga mientras se generan recomendaciones
+   */
   if (loading) {
     return (
       <>
@@ -312,29 +417,39 @@ export default function RecommendationsScreen() {
   return (
     <>
       <AnimatedBackground isDark={isDark} theme={theme} />
+
+      {/* Contenido scrolleable */}
       <ScrollView style={styles.screen} showsVerticalScrollIndicator={false}>
+        {/* Header con botón de regreso */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backText}>←</Text>
           </TouchableOpacity>
+
           <Text style={styles.title}>Mejora tu sueño</Text>
+
+          {/* Spacer para centrar el título */}
           <View style={styles.headerSpacer} />
         </View>
 
+        {/* Resumen con métricas principales */}
         <View style={styles.summaryCard}>
           <Text style={styles.summaryTitle}>Resumen de sueño</Text>
+
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Horas dormidas</Text>
             <Text style={[styles.summaryValue, { color: '#4ade80' }]}>
               {sleepData?.hoursSlept ?? 0}h
             </Text>
           </View>
+
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Tiempo despierto</Text>
             <Text style={[styles.summaryValue, { color: '#fbbf24' }]}>
               {sleepData?.timeAwake ?? 0}h
             </Text>
           </View>
+
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Pickups nocturnos</Text>
             <Text style={[styles.summaryValue, { color: '#f87171' }]}>
@@ -343,26 +458,40 @@ export default function RecommendationsScreen() {
           </View>
         </View>
 
+        {/* Si existen recomendaciones IA, se muestran en tarjetas expandibles */}
         {aiRecommendations.length > 0 ? (
           <>
-            <Text style={styles.sectionTitle}>Aquí tienes recomendaciones segun tus resultados</Text>
+            <Text style={styles.sectionTitle}>
+              Aquí tienes recomendaciones segun tus resultados
+            </Text>
+
             <View style={styles.recommendationsList}>
               {aiRecommendations.map((rec, idx) => (
-                <TouchableOpacity 
-                  key={rec.id} 
+                <TouchableOpacity
+                  key={rec.id}
                   style={styles.aiRecommendationCard}
                   onPress={() => toggleExpand(rec.id)}
                   activeOpacity={0.6}
                 >
                   <View style={styles.aiRecHeader}>
+                    {/* Número de recomendación */}
                     <View style={styles.aiRecBadge}>
                       <Text style={styles.aiRecBadgeText}>{idx + 1}</Text>
                     </View>
+
                     <Text style={styles.recommendationTitle}>{rec.title}</Text>
-                    <Text style={styles.expandIcon}>{expandedCards.has(rec.id) ? '−' : '+'}</Text>
+
+                    {/* Ícono + / − para expandir */}
+                    <Text style={styles.expandIcon}>
+                      {expandedCards.has(rec.id) ? '−' : '+'}
+                    </Text>
                   </View>
+
+                  {/* Descripción solo cuando está expandido */}
                   {expandedCards.has(rec.id) && (
-                    <Text style={styles.recommendationDescription}>{rec.description}</Text>
+                    <Text style={styles.recommendationDescription}>
+                      {rec.description}
+                    </Text>
                   )}
                 </TouchableOpacity>
               ))}
@@ -370,12 +499,18 @@ export default function RecommendationsScreen() {
           </>
         ) : null}
 
+        {/* Espacio inferior para que no quede pegado al borde */}
         <View style={{ height: 80 }} />
       </ScrollView>
     </>
   );
 }
 
+/**
+ * createStyles:
+ * Genera estilos dinámicos usando el tema de la app.
+ * Se llama con useMemo arriba para evitar recalcular en cada render.
+ */
 const createStyles = (theme: any, isDark: boolean) =>
   StyleSheet.create({
     screen: {
