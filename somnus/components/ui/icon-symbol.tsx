@@ -1,17 +1,37 @@
-// Fallback for using MaterialIcons on Android and web.
+/**
+ * IconSymbol (fallback)
+ * --------------------------------------------------
+ * Componente de respaldo para Android y Web.
+ *
+ * - En iOS se utilizan SF Symbols (expo-symbols).
+ * - En Android y Web se utilizan Material Icons.
+ *
+ * Este archivo permite usar **los mismos nombres de íconos**
+ * (basados en SF Symbols) en todas las plataformas,
+ * haciendo el mapeo manual cuando no están disponibles.
+ */
 
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { SymbolWeight, SymbolViewProps } from 'expo-symbols';
 import { ComponentProps } from 'react';
 import { OpaqueColorValue, type StyleProp, type TextStyle } from 'react-native';
 
-type IconMapping = Record<SymbolViewProps['name'], ComponentProps<typeof MaterialIcons>['name']>;
+/**
+ * Tipo que relaciona:
+ * - nombre de SF Symbol → nombre de Material Icon
+ */
+type IconMapping = Record<
+  SymbolViewProps['name'],
+  ComponentProps<typeof MaterialIcons>['name']
+>;
+
+/**
+ * Nombres válidos de íconos soportados por el sistema
+ */
 type IconSymbolName = keyof typeof MAPPING;
 
 /**
- * Add your SF Symbols to Material Icons mappings here.
- * - see Material Icons in the [Icons Directory](https://icons.expo.fyi).
- * - see SF Symbols in the [SF Symbols](https://developer.apple.com/sf-symbols/) app.
+ * Mapeo entre SF Symbols y Material Icons.
  */
 const MAPPING = {
   'house.fill': 'home',
@@ -21,9 +41,16 @@ const MAPPING = {
 } as IconMapping;
 
 /**
- * An icon component that uses native SF Symbols on iOS, and Material Icons on Android and web.
- * This ensures a consistent look across platforms, and optimal resource usage.
- * Icon `name`s are based on SF Symbols and require manual mapping to Material Icons.
+ * IconSymbol
+ * --------------------------------------------------
+ * Componente multiplataforma para íconos.
+ *
+ * Usa:
+ * - Material Icons en Android / Web
+ * - SF Symbols en iOS (archivo alterno)
+ *
+ * Así se mantiene una apariencia coherente
+ * sin duplicar componentes por plataforma.
  */
 export function IconSymbol({
   name,
@@ -31,11 +58,27 @@ export function IconSymbol({
   color,
   style,
 }: {
+  // Nombre del ícono basado en SF Symbols
   name: IconSymbolName;
+
+  // Tamaño del ícono
   size?: number;
+
+  // Color del ícono
   color: string | OpaqueColorValue;
+
+  // Estilos adicionales
   style?: StyleProp<TextStyle>;
+
+  // weight se mantiene por compatibilidad con iOS
   weight?: SymbolWeight;
 }) {
-  return <MaterialIcons color={color} size={size} name={MAPPING[name]} style={style} />;
+  return (
+    <MaterialIcons
+      color={color}
+      size={size}
+      name={MAPPING[name]}
+      style={style}
+    />
+  );
 }
