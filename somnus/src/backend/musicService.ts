@@ -1,3 +1,6 @@
+// Servicio de música (Supabase)
+// Maneja onboarding, álbumes, preferencias y canciones
+
 import { supabase } from './supabaseClient';
 
 export type Album = {
@@ -12,6 +15,7 @@ export type Album = {
   active?: boolean;
 };
 
+// Obtiene el ID del usuario autenticado
 async function getUserId(): Promise<string> {
   const { data, error } = await supabase.auth.getUser();
   if (error || !data.user) {
@@ -20,6 +24,7 @@ async function getUserId(): Promise<string> {
   return data.user.id;
 }
 
+// Verifica si el usuario ya completó el onboarding musical
 export async function getMusicOnboardingStatus(): Promise<boolean> {
   const userId = await getUserId();
   const { data, error } = await supabase
@@ -35,9 +40,11 @@ export async function getMusicOnboardingStatus(): Promise<boolean> {
   return data?.music_onboarding_done ?? false;
 }
 
+// Trae un lote de álbumes NO vistos aún por el usuario
 export async function fetchAlbumBatch(limit = 5): Promise<Album[]> {
   const userId = await getUserId();
 
+  // Preferencias del usuario (álbumes ya evaluados)
   const { data: prefs, error: prefsError } = await supabase
     .from('user_album_preferences')
     .select('album_id')
@@ -48,9 +55,11 @@ export async function fetchAlbumBatch(limit = 5): Promise<Album[]> {
     throw new Error(prefsError.message);
   }
 
+  // Conjunto de álbumes ya vistos
   const seen = new Set((prefs ?? []).map((p) => p.album_id));
   console.log('[musicService] Already seen albums:', seen.size, Array.from(seen));
 
+  // Álbumes disponibles (activos) ordenados por prioridad/fecha
   const { data: albums, error: albumsError } = await supabase
     .from('albums')
     .select('*')
@@ -64,6 +73,7 @@ export async function fetchAlbumBatch(limit = 5): Promise<Album[]> {
     throw new Error(albumsError.message);
   }
 
+  // Filtra los álbumes no vistos y toma solo "limit"
   console.log('[musicService] Total albums from DB:', albums?.length ?? 0);
   const filtered = (albums ?? []).filter((a) => !seen.has(a.id)).slice(0, limit);
   console.log('[musicService] Filtered albums to show:', filtered.length, 'limit:', limit);
@@ -71,6 +81,7 @@ export async function fetchAlbumBatch(limit = 5): Promise<Album[]> {
   return filtered;
 }
 
+// Guarda la preferencia del usuario (like/dislike) para un álbum
 export async function submitPreference(albumId: string, liked: boolean): Promise<void> {
   const userId = await getUserId();
 
@@ -85,6 +96,7 @@ export async function submitPreference(albumId: string, liked: boolean): Promise
   }
 }
 
+// Marca el onboarding musical como completado en profiles
 export async function markMusicOnboardingDone(): Promise<void> {
   const userId = await getUserId();
   const { error } = await supabase
@@ -97,9 +109,11 @@ export async function markMusicOnboardingDone(): Promise<void> {
   }
 }
 
+// Obtiene todos los álbumes que el usuario marcó como "liked"
 export async function getLikedAlbums(): Promise<Album[]> {
   const userId = await getUserId();
 
+  // Trae preferencias y hace join con la tabla albums
   const { data, error } = await supabase
     .from('user_album_preferences')
     .select(`
@@ -122,6 +136,7 @@ export async function getLikedAlbums(): Promise<Album[]> {
     throw new Error(error.message);
   }
 
+  // Extrae solo el objeto album desde la relación
   const albums = (data ?? [])
     .map((item: any) => item.albums)
     .filter((album: any) => album !== null) as Album[];
@@ -142,6 +157,7 @@ export type Song = {
   created_at?: string;
 };
 
+// Obtiene canciones de un álbum, ordenadas por número de pista
 export async function getSongsByAlbumId(albumId: string): Promise<Song[]> {
   const { data, error } = await supabase
     .from('songs')

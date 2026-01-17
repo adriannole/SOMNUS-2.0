@@ -1,3 +1,5 @@
+// Servicio de autenticación y perfil usando Supabase
+
 import { supabase } from './supabaseClient';
 
 export type ProfilePayload = {
@@ -8,8 +10,10 @@ export type ProfilePayload = {
   email: string;
 };
 
+// Respuesta estándar para funciones de auth
 type AuthResponse = { success: true } | { success: false; error: string };
 
+// Parámetros para registrar usuario + perfil
 type SignUpParams = {
   email: string;
   password: string;
@@ -18,11 +22,13 @@ type SignUpParams = {
   age: number;
 };
 
+// Parámetros para iniciar sesión
 type SignInParams = {
   email: string;
   password: string;
 };
 
+// Registro: crea usuario en Auth y guarda perfil en "profiles"
 export async function signUpWithProfile(params: SignUpParams): Promise<AuthResponse> {
   const { email, password, firstName, lastName, age } = params;
 
@@ -52,6 +58,7 @@ export async function signUpWithProfile(params: SignUpParams): Promise<AuthRespo
   return { success: true };
 }
 
+// Login con email y contraseña
 export async function signIn(params: SignInParams): Promise<AuthResponse> {
   const { email, password } = params;
   const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -63,10 +70,12 @@ export async function signIn(params: SignInParams): Promise<AuthResponse> {
   return { success: true };
 }
 
+// Cierra sesión del usuario actual
 export async function signOut(): Promise<void> {
   await supabase.auth.signOut();
 }
 
+// Obtiene usuario actual + perfil (tabla profiles)
 export async function getCurrentUser() {
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   
@@ -101,6 +110,7 @@ export async function getCurrentUser() {
   };
 }
 
+// Actualiza email en Auth y también en "profiles"
 export async function updateUserEmail(newEmail: string): Promise<AuthResponse> {
   const { error } = await supabase.auth.updateUser({
     email: newEmail,
@@ -122,6 +132,7 @@ export async function updateUserEmail(newEmail: string): Promise<AuthResponse> {
   return { success: true };
 }
 
+// Actualiza campos del perfil del usuario autenticado
 export async function updateUserProfile(updates: Partial<ProfilePayload>): Promise<AuthResponse> {
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   
@@ -141,6 +152,7 @@ export async function updateUserProfile(updates: Partial<ProfilePayload>): Promi
   return { success: true };
 }
 
+// Elimina cuenta (aquí se borra perfil y se hace signOut)
 export async function deleteUserAccount(): Promise<AuthResponse> {
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
