@@ -4,6 +4,7 @@ import { View, Animated, Dimensions } from 'react-native';
 const { width, height } = Dimensions.get('window');
 
 export function AnimatedBackground({ isDark, theme }) {
+  // Valor animado (0 -> 1) para controlar glow (opacidad, escala, movimiento)
   const [glowAnimation] = useState(new Animated.Value(0));
 
   useEffect(() => {
@@ -24,14 +25,17 @@ export function AnimatedBackground({ isDark, theme }) {
     ).start();
   }, [glowAnimation]);
 
+  // Color de fondo general (usa el BACKGROUND_COLOR del theme)
   const getBackgroundColor = () => {
     return isDark ? theme.BACKGROUND_COLOR : theme.BACKGROUND_COLOR;
   };
 
+  // Color de partículas (no se usa aquí, pero queda para futuras mejoras)
   const getParticleColor = () => {
     return isDark ? '#7C9EFF' : '#6B8AE3';
   };
 
+  // Color del glow (círculos)
   const getGlowColor = () => {
     return isDark ? '#7C9EFF' : '#6B8AE3';
   };
@@ -40,6 +44,7 @@ export function AnimatedBackground({ isDark, theme }) {
     <View
       style={[
         {
+          // Contenedor absoluto para quedar detrás de toda la UI
           position: 'absolute',
           width: '100%',
           height: '100%',
@@ -71,10 +76,14 @@ export function AnimatedBackground({ isDark, theme }) {
           backgroundColor: getGlowColor(),
           top: -150,
           left: -150,
+
+          // Opacidad animada (súper sutil)
           opacity: glowAnimation.interpolate({
             inputRange: [0, 1],
             outputRange: [0.05, 0.09],
           }),
+
+          // Movimiento y escala suave para efecto “respiración”
           transform: [
             {
               scale: glowAnimation.interpolate({
@@ -108,10 +117,14 @@ export function AnimatedBackground({ isDark, theme }) {
           backgroundColor: getGlowColor(),
           bottom: -120,
           right: -120,
+
+          // Opacidad animada (súper sutil)
           opacity: glowAnimation.interpolate({
             inputRange: [0, 1],
             outputRange: [0.04, 0.08],
           }),
+
+          // Movimiento y escala suave
           transform: [
             {
               scale: glowAnimation.interpolate({

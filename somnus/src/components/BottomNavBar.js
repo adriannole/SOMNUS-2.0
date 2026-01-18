@@ -1,3 +1,13 @@
+/**
+ * BottomNavBar
+ * --------------------------------------------------
+ * Barra de navegación inferior personalizada.
+ *
+ * - Permite navegar entre las pestañas principales
+ * - Resalta la pestaña activa
+ * - Cambia estilos según modo claro u oscuro
+ */
+
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -7,6 +17,9 @@ import { ChartIcon, MusicIcon, SettingsIcon, HomeIconNav } from './Icons';
 export default function BottomNavBar({ activeTab = 'home', isDark }) {
   const router = useRouter();
   const { theme } = useTheme();
+/**
+   * Maneja la navegación según el botón presionado
+   */
 
   const handleNavigation = (tab) => {
     switch (tab) {
@@ -26,7 +39,9 @@ export default function BottomNavBar({ activeTab = 'home', isDark }) {
         break;
     }
   };
-
+  /**
+   * Estilos dinámicos según el tema
+   */
   const styles = StyleSheet.create({
     navBar: {
       position: 'absolute',
