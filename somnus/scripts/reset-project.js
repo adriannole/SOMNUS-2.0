@@ -91,9 +91,9 @@ const moveDirectories = async (userInput) => {
       layoutContent
     );
 
-    console.log("✅ Proyecto reiniciado correctamente.");
+    console.log(" Proyecto reiniciado correctamente.");
   } catch (error) {
-    console.error("❌ Error al reiniciar el proyecto:", error.message);
+    console.error(" Error al reiniciar el proyecto:", error.message);
   }
 };
 
