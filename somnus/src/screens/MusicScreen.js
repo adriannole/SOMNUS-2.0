@@ -47,12 +47,12 @@ export default function MusicScreen() {
     setLoading(true);
     setError(null);
     try {
-      console.log('[MusicScreen] 🎵 Loading liked albums...');
+      console.log('[MusicScreen]  Loading liked albums...');
       const data = await getLikedAlbums();
-      console.log('[MusicScreen] ✅ Loaded', data.length, 'albums');
+      console.log('[MusicScreen]  Loaded', data.length, 'albums');
       setAlbums(data);
     } catch (err) {
-      console.error('[MusicScreen] ❌ Error loading albums:', err);
+      console.error('[MusicScreen]  Error loading albums:', err);
       setError(err.message || 'No se pudieron cargar los álbumes');
     } finally {
       setLoading(false);
@@ -111,7 +111,7 @@ export default function MusicScreen() {
   };
 
   const handleAlbumPress = (album) => {
-    console.log('[MusicScreen] 📱 Navigating to album detail:', album.title);
+    console.log('[MusicScreen]  Navigating to album detail:', album.title);
     router.push({
       pathname: '/album-view',
       params: { 
