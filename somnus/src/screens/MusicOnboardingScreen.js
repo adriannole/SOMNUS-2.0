@@ -314,7 +314,7 @@ export default function MusicOnboardingScreen() {
           </TouchableOpacity>
           <Text style={styles.counter}>{remaining} restantes</Text>
           <TouchableOpacity style={[styles.circleButton, styles.like]} onPress={() => forceSwipe('right')}>
-            <Text style={styles.circleButtonText}>♥</Text>
+            <Text style={styles.circleButtonText}>✓</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -493,7 +493,9 @@ function createStyles(theme, isDark) {
       borderColor: theme.BORDER_COLOR,
     },
     like: {
-      backgroundColor: theme.ACCENT_COLOR,
+      backgroundColor: theme.SECONDARY_COLOR,
+      borderWidth: 2,
+      borderColor: theme.BORDER_COLOR,
     },
     counter: {
       color: theme.TEXT_COLOR,
