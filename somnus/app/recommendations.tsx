@@ -24,6 +24,7 @@ import { useRouter } from 'expo-router';
 
 import { useTheme } from '../src/hooks/useTheme';
 import { AnimatedBackground } from '../src/components/AnimatedBackground';
+import { getCurrentUser } from '../src/backend/authService';
 import sleepTracker from '../src/services/sleepTracker';
 
 /**
@@ -323,6 +324,7 @@ export default function RecommendationsScreen() {
 
   // Controla pantalla de carga
   const [loading, setLoading] = useState(true);
+  const [userName, setUserName] = useState('');
 
   /**
    * didLoadRef:
@@ -352,6 +354,9 @@ export default function RecommendationsScreen() {
       didLoadRef.current = true;
 
       setLoading(true);
+      const currentUser = await getCurrentUser().catch(() => null);
+      const firstName = currentUser?.first_name?.trim() || '';
+      setUserName(firstName);
 
       // 1) Cargar última sesión (si no existe, usar valores por defecto)
       const latest = (await sleepTracker.getLatestSession()) ?? {
@@ -462,7 +467,7 @@ export default function RecommendationsScreen() {
         {aiRecommendations.length > 0 ? (
           <>
             <Text style={styles.sectionTitle}>
-              Aquí tienes recomendaciones segun tus resultados
+              {userName ? `${userName}, ` : ''}Aquí tienes recomendaciones segun tus resultados
             </Text>
 
             <View style={styles.recommendationsList}>
