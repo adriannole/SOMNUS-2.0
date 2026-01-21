@@ -33,14 +33,15 @@ const slides = [
 ];
 
 export default function OnboardingScreen() {
-  const router = useRouter();
-  const { theme } = useTheme();
-  const [index, setIndex] = useState(0);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.85)).current;
-  const highlightAnim = useRef(new Animated.Value(0)).current;
+  const router = useRouter();        // navegación
+  const { theme } = useTheme();      // colores del tema
+  const [index, setIndex] = useState(0); // slide actual
 
+  // Animaciones de entrada
+  const fadeAnim = useRef(new Animated.Value(0)).current;      // opacidad
+  const slideAnim = useRef(new Animated.Value(0)).current;     // movimiento
+  const scaleAnim = useRef(new Animated.Value(0.85)).current;  // zoom
+  const highlightAnim = useRef(new Animated.Value(0)).current; // barra decorativa
 
   useEffect(() => {
     Animated.parallel([
@@ -189,7 +190,7 @@ export default function OnboardingScreen() {
     </>
   );
 }
-
+// Estilos (estructura del onboarding)
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
