@@ -47,7 +47,7 @@ export default function HomeScreen() {
   // Recargar datos cada vez que la pantalla obtiene foco
   useFocusEffect(
     useCallback(() => {
-      console.log('[HomeScreen] 🔄 Screen focused, reloading data...');
+      console.log('[HomeScreen]  Screen focused, reloading data...');
       loadSleepData();
       checkTrackingStatus();
       return () => {};

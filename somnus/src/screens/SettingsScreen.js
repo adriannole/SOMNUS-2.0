@@ -47,7 +47,7 @@ export default function SettingsScreen() {
 
   const handleGenerateTestData = async () => {
     try {
-      console.log('[SettingsScreen] 🎲 Generating test data...');
+      console.log('[SettingsScreen]  Generating test data...');
       await sleepTracker.generateTestData();
       
       showAlert(
