@@ -46,43 +46,71 @@ const DEFAULT_RECOMMENDATIONS = [
     id: 'regular-schedule',
     title: 'Rutina constante',
     description: 'Dormi y despiértate a la misma hora cada día para estabilizar tu ritmo circadiano.',
+    icon: '🗓️',
     vector: [0.9, 0.7, -0.4, -0.2],
   },
   {
     id: 'reduce-awake',
     title: 'Reduce despertares',
     description: 'Evita pantallas 90 minutos antes de dormir y mantén la habitación fresca y oscura.',
+    icon: '🌙',
     vector: [0.6, 0.4, -0.8, -0.3],
   },
   {
     id: 'minimize-pickups',
     title: 'Menos pickups nocturnos',
     description: 'Silencia notificaciones de noche y coloca el teléfono fuera de la habitación.',
+    icon: '📵',
     vector: [0.4, 0.2, -0.2, -0.9],
   },
   {
     id: 'optimize-sleep',
     title: 'Mejora calidad del sueño',
     description: 'Practica respiración 4-7-8 y evita cafeína después de las 2 PM.',
+    icon: '🧘',
     vector: [0.8, 0.6, -0.3, -0.4],
   },
   {
     id: 'wind-down',
     title: 'Rutina de relajación',
     description: 'Dedica 15 minutos antes de dormir a lectura, meditación o baño tibio.',
+    icon: '📖',
     vector: [0.7, 0.5, -0.5, -0.2],
   },
   {
     id: 'sleep-cycles',
     title: 'Respeta ciclos de sueño',
     description: 'Duerme múltiplos de 90 minutos para despertar en fase de sueño ligero.',
+    icon: '💤',
     vector: [0.85, 0.75, -0.35, -0.15],
   },
   {
     id: 'exercise',
     title: 'Ejercicio regular',
     description: 'Realiza actividad física en la mañana o tarde para mejorar el sueño profundo.',
+    icon: '🏃‍♂️',
     vector: [0.8, 0.7, -0.4, -0.2],
+  },
+  {
+    id: 'caffeine-cutoff',
+    title: 'Corte de cafeína',
+    description: 'Evita cafeína después de las 14:00 para mejorar la conciliación del sueño.',
+    icon: '☕',
+    vector: [0.7, 0.4, -0.4, -0.2],
+  },
+  {
+    id: 'sleep-environment',
+    title: 'Ambiente ideal',
+    description: 'Mantén el cuarto fresco, oscuro y silencioso para dormir más profundo.',
+    icon: '🌡️',
+    vector: [0.75, 0.55, -0.5, -0.2],
+  },
+  {
+    id: 'morning-light',
+    title: 'Luz matutina',
+    description: 'Recibe 10-15 min de luz solar al despertar para regular el ritmo.',
+    icon: '🌤️',
+    vector: [0.7, 0.6, -0.3, -0.1],
   },
 ];
 
@@ -124,6 +152,59 @@ const buildUserVector = (sleepData: any) => {
     timeAwake / 2,
     pickups / 10,
   ]);
+};
+
+const buildTimingRecommendation = (sleepData: any) => {
+  const startTime = sleepData?.startTime;
+  const endTime = sleepData?.endTime;
+  const hoursSlept = sleepData?.hoursSlept ?? 0;
+  if (!startTime || !endTime) return null;
+
+  const start = new Date(startTime);
+  const end = new Date(endTime);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+
+  const startHour = start.getHours();
+  const endHour = end.getHours();
+
+  const formatTime = (d: Date) =>
+    d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+  const wentToBedLate = startHour >= 23 || startHour <= 4;
+  const wokeVeryEarly = endHour >= 4 && endHour <= 6;
+
+  if (hoursSlept >= 8) {
+    return {
+      id: 'timing-recommendation-positive',
+      title: 'Excelente descanso',
+      description: `Dormiste ${hoursSlept.toFixed(1)}h. ¡Excelente! Sigue con ese ritmo para mantener un ciclo saludable sigue las demas recomendaciones.`,
+      icon: '✅',
+      isAI: false,
+    };
+  }
+
+  if (hoursSlept >= 7) {
+    const missing = Math.max(0, 8 - hoursSlept);
+    return {
+      id: 'timing-recommendation-close',
+      title: 'Casi completo',
+      description: `Te faltó ${missing.toFixed(1)}h para completar un ciclo de 8h. Intenta dormir un poco más esta noche.`,
+      icon: '⏳',
+      isAI: false,
+    };
+  }
+
+  if (wentToBedLate || wokeVeryEarly || hoursSlept < 7) {
+    return {
+      id: 'timing-recommendation-early',
+      title: 'Acuéstate más temprano',
+      description: `Te acostaste a las ${formatTime(start)} y te levantaste a las ${formatTime(end)}. Para llegar a 7–8h, intenta acostarte 30–60 min antes.`,
+      icon: '🕘',
+      isAI: false,
+    };
+  }
+
+  return null;
 };
 
 /**
@@ -213,7 +294,7 @@ const saveRedisRecommendations = async (recommendations: any[]) => {
  * 2. ...
  * 3. ...
  */
-const parseAIRecommendations = (text: string) => {
+const parseAIRecommendations = (text: string, icons: string[] = []) => {
   if (!text) return [];
 
   // Divide por "1." "2." "3." o bullets (- •)
@@ -228,6 +309,7 @@ const parseAIRecommendations = (text: string) => {
       id: `ai-${idx}`,
       title,
       description: description || title,
+      icon: icons[idx],
       isAI: true,
     };
   });
@@ -392,10 +474,17 @@ export default function RecommendationsScreen() {
       setRecommendations(scored);
 
       // 4) (Opcional) Pedir a Gemini 3 recomendaciones extra personalizadas
+      const timingRec = buildTimingRecommendation(latest);
+      const topForAI = scored.slice(0, 3);
       const advice = await generateGeminiAdvice(latest, scored);
       if (advice) {
-        const parsed = parseAIRecommendations(advice);
-        setAiRecommendations(parsed);
+        const parsed = parseAIRecommendations(
+          advice,
+          topForAI.map((rec: any) => rec.icon).filter(Boolean)
+        );
+        setAiRecommendations(timingRec ? [timingRec, ...parsed] : parsed);
+      } else if (timingRec) {
+        setAiRecommendations([timingRec]);
       }
 
       setLoading(false);
@@ -483,6 +572,12 @@ export default function RecommendationsScreen() {
                     <View style={styles.aiRecBadge}>
                       <Text style={styles.aiRecBadgeText}>{idx + 1}</Text>
                     </View>
+
+                    {rec.icon ? (
+                      <View style={styles.aiRecIcon}>
+                        <Text style={styles.aiRecIconText}>{rec.icon}</Text>
+                      </View>
+                    ) : null}
 
                     <Text style={styles.recommendationTitle}>{rec.title}</Text>
 
@@ -635,6 +730,20 @@ const createStyles = (theme: any, isDark: boolean) =>
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: 10,
+    },
+    aiRecIcon: {
+      width: 28,
+      height: 28,
+      borderRadius: 8,
+      backgroundColor: theme.SECONDARY_COLOR,
+      borderWidth: 1,
+      borderColor: theme.BORDER_COLOR,
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+    },
+    aiRecIconText: {
+      fontSize: 14,
     },
     aiRecBadge: {
       width: 32,
