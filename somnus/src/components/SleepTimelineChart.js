@@ -9,8 +9,21 @@ import {
 import Svg, { Line, Circle, Polyline, Rect, G, TSpan } from 'react-native-svg';
 import { useTheme } from '../hooks/useTheme';
 
+// Obtener el ancho de la pantalla para hacer el gráfico responsivo
 const { width } = Dimensions.get('window');
 
+/**
+ * SleepTimelineChart
+ * ------------------
+ * Componente que representa visualmente una línea de tiempo del sueño,
+ * mostrando períodos de sueño, despertares (pickups) y el final del descanso.
+ *
+ * Props:
+ * - startTime: fecha/hora de inicio del sueño
+ * - endTime: fecha/hora de finalización
+ * - pickups: número de despertares durante el sueño
+ * - hoursSlept: total de horas dormidas (informativo)
+ */
 export default function SleepTimelineChart({
   startTime,
   endTime,
@@ -18,23 +31,27 @@ export default function SleepTimelineChart({
   hoursSlept,
 }) {
   const { theme } = useTheme();
+
+  // Dimensiones y márgenes del gráfico
   const CHART_WIDTH = width - 60;
   const CHART_HEIGHT = 200;
   const PADDING = 30;
 
-  // Calcular puntos de la línea
+  /**
+   * Cálculo de los puntos que conforman la línea de tiempo del sueño.
+   * Se usa useMemo para evitar cálculos innecesarios en cada render.
+   */
   const calculatePoints = useMemo(() => {
     const start = new Date(startTime);
     const end = new Date(endTime);
 
-    // Horas totales del rango
+    // Tiempo total del rango en horas
     const totalMs = end - start;
     const totalHours = totalMs / (1000 * 60 * 60);
 
-    // Generar puntos de sueño
     const points = [];
 
-    // Punto inicial (durmiendo)
+    // Punto inicial: comienza durmiendo
     points.push({
       time: start,
       label: start.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
@@ -42,14 +59,14 @@ export default function SleepTimelineChart({
       type: 'start',
     });
 
-    // Generar pickups (despertares)
+    // Generación de despertares intermedios (pickups)
     if (pickups > 0) {
       const pickupInterval = totalHours / (pickups + 1);
 
       for (let i = 1; i <= pickups; i++) {
         const pickupTime = new Date(start.getTime() + (pickupInterval * i * 60 * 60 * 1000));
         
-        // Pickup (despierto)
+        // Momento en que se despierta
         points.push({
           time: pickupTime,
           label: pickupTime.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
@@ -57,8 +74,8 @@ export default function SleepTimelineChart({
           type: 'pickup',
         });
 
-        // Volver a dormir
-        const backToSleep = new Date(pickupTime.getTime() + (15 * 60 * 1000)); // 15 min despierto
+        // Se asume que vuelve a dormir tras 15 minutos
+        const backToSleep = new Date(pickupTime.getTime() + (15 * 60 * 1000));
         points.push({
           time: backToSleep,
           label: backToSleep.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
@@ -68,7 +85,7 @@ export default function SleepTimelineChart({
       }
     }
 
-    // Punto final (despierto/fin)
+    // Punto final: termina despierto
     points.push({
       time: end,
       label: end.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
@@ -81,23 +98,32 @@ export default function SleepTimelineChart({
 
   const { points, start, end, totalHours } = calculatePoints;
 
-  // Convertir puntos a coordenadas SVG
+  /**
+   * Convierte una hora en coordenada X dentro del SVG
+   */
   const getXCoordinate = (pointTime) => {
     const ms = pointTime - start;
     const hours = ms / (1000 * 60 * 60);
     return PADDING + (hours / totalHours) * CHART_WIDTH;
   };
 
+  /**
+   * Convierte el estado (durmiendo/despierto) en coordenada Y
+   * 0 = despierto (arriba)
+   * 1 = durmiendo (abajo)
+   */
   const getYCoordinate = (value) => {
-    // value: 0 = despierto (arriba), 1 = durmiendo (abajo)
     return PADDING + (1 - value) * (CHART_HEIGHT - PADDING * 2);
   };
 
-  // Crear polyline data
+  // Datos finales para la polyline del SVG
   const polylinePoints = points
     .map((p) => `${getXCoordinate(p.time)},${getYCoordinate(p.value)}`)
     .join(' ');
 
+  /**
+   * Segmentos de sueño/despierto usados para dibujar barras de estado
+   */
   const segments = useMemo(() => {
     if (!points.length) return [];
     const sorted = [...points].sort((a, b) => a.time - b.time);
@@ -111,6 +137,9 @@ export default function SleepTimelineChart({
     return segs;
   }, [points]);
 
+  /**
+   * Estilos del componente
+   */
   const styles = StyleSheet.create({
     container: {
       marginVertical: 16,
@@ -191,7 +220,7 @@ export default function SleepTimelineChart({
             height={CHART_HEIGHT}
             viewBox={`0 0 ${CHART_WIDTH + PADDING * 2} ${CHART_HEIGHT}`}
           >
-            {/* Background */}
+            {/* Fondo del área del gráfico */}
             <Rect
               x={PADDING}
               y={PADDING}
@@ -201,7 +230,7 @@ export default function SleepTimelineChart({
               rx={4}
             />
 
-            {/* Líneas de referencia (horas) */}
+            {/* Líneas verticales de referencia por hora */}
             {Array.from({ length: Math.ceil(totalHours) + 1 }).map((_, idx) => {
               const x = PADDING + (idx / totalHours) * CHART_WIDTH;
               return (
@@ -217,7 +246,7 @@ export default function SleepTimelineChart({
               );
             })}
 
-            {/* Línea central (divisor sueño/despierto) */}
+            {/* Línea divisoria entre durmiendo y despierto */}
             <Line
               x1={PADDING}
               y1={PADDING + (CHART_HEIGHT - PADDING * 2) / 2}
@@ -228,7 +257,7 @@ export default function SleepTimelineChart({
               strokeDasharray="4,4"
             />
 
-            {/* Barra de sueño segmentada (más clara) */}
+            {/* Segmentos de sueño y despertares */}
             {segments.map((seg, idx) => {
               const xStart = getXCoordinate(seg.start);
               const xEnd = getXCoordinate(seg.end);
@@ -251,14 +280,18 @@ export default function SleepTimelineChart({
           </Svg>
         </View>
 
-        {/* Time labels */}
+        {/* Etiquetas de tiempo */}
         <View style={styles.timeLabels}>
-          <Text style={styles.timeLabel}>{start.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</Text>
+          <Text style={styles.timeLabel}>
+            {start.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+          </Text>
           <Text style={styles.timeLabel}>Tiempo</Text>
-          <Text style={styles.timeLabel}>{end.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</Text>
+          <Text style={styles.timeLabel}>
+            {end.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+          </Text>
         </View>
 
-        {/* Leyenda */}
+        {/* Leyenda del gráfico */}
         <View style={styles.legend}>
           <View style={styles.legendItem}>
             <View style={[styles.legendColor, { backgroundColor: '#4CAF50' }]} />
@@ -274,7 +307,7 @@ export default function SleepTimelineChart({
           </View>
         </View>
 
-        {/* Stats */}
+        {/* Estadísticas resumidas */}
         <View style={styles.statRow}>
           <View style={styles.statItem}>
             <Text style={styles.statLabel}>Duración Total:</Text>

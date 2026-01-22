@@ -9,12 +9,20 @@ const { width, height } = Dimensions.get('window');
  *
  * Componente que renderiza un fondo animado con efecto glow.
  * El efecto se adapta dinámicamente al tema claro u oscuro.
- *
- * @param {boolean} isDark - Indica si el tema activo es oscuro
- * @param {Object} theme - Objeto de tema con colores centralizados
  */
-export function AnimatedBackground({ isDark, theme }) {
 
+interface AnimatedBackgroundProps {
+  isDark: boolean;
+  theme: {
+    BACKGROUND_COLOR: string;
+    TEXT_COLOR: string;
+    ACCENT_COLOR: string;
+    SECONDARY_COLOR: string;
+    BORDER_COLOR: string;
+  };
+}
+
+export function AnimatedBackground({ isDark, theme }: AnimatedBackgroundProps) {
   // Valor animado persistente para controlar el efecto de glow
   const glowAnimation = useRef(new Animated.Value(0)).current;
 
