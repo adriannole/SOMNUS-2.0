@@ -38,7 +38,6 @@ const REDIS_REST_TOKEN = process.env.EXPO_PUBLIC_REDIS_REST_TOKEN;
 
 /**
  * Recomendaciones por defecto (fallback):
- * - Se usan si Redis no devuelve datos válidos
  * - Cada recomendación trae un "vector" para calcular similitud con el usuario
  */
 const DEFAULT_RECOMMENDATIONS = [
