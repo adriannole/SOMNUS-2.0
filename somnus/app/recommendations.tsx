@@ -345,7 +345,7 @@ ${topRecommendations
 Genera 3 recomendaciones CORTAS y MUY ESPECÍFICAS para este usuario (máximo 1-2 líneas cada una). 
 Sé conciso y directo. Incluye exactamente qué hacer.
 
-Formato: Escribe cada recomendación en una línea empezando con "1.", "2." o "3." pero no vuelvas a poner aqui tienes estas recomendaciones o estas 3 recomendaciones`;
+Formato: Escribe cada recomendación en una línea empezando con "1.", "2." o "3." pero no vuelvas a poner aqui tienes estas recomendaciones o estas 3 recomendaciones no vuelvas a repetir la instruccion`;
 
   try {
     console.log(
