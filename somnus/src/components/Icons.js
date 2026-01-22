@@ -2,6 +2,17 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import Svg, { Path, Circle, G, Rect, Ellipse } from 'react-native-svg';
 
+/**
+ * Conjunto de íconos SVG reutilizables para la aplicación.
+ *
+ * Todos los íconos:
+ * - Aceptan tamaño configurable (`size`)
+ * - Aceptan color configurable (`color`)
+ * - Están basados en `react-native-svg`
+ *
+ * Esto permite consistencia visual y fácil mantenimiento.
+ */
+
 export const MoonIcon = ({ size = 24, color = '#fff' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
@@ -15,6 +26,10 @@ export const MoonIcon = ({ size = 24, color = '#fff' }) => (
   </Svg>
 );
 
+/**
+ * Ícono de ojo
+ * Usado comúnmente para acciones de visibilidad (mostrar/ocultar)
+ */
 export const EyeIcon = ({ size = 24, color = '#fff' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
@@ -28,6 +43,10 @@ export const EyeIcon = ({ size = 24, color = '#fff' }) => (
   </Svg>
 );
 
+/**
+ * Ícono de teléfono
+ * Representa acciones relacionadas a contacto o llamadas
+ */
 export const PhoneIcon = ({ size = 24, color = '#fff' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Rect
@@ -46,6 +65,10 @@ export const PhoneIcon = ({ size = 24, color = '#fff' }) => (
   </Svg>
 );
 
+/**
+ * Ícono de reloj
+ * Usado para tiempo, horarios o duración
+ */
 export const ClockIcon = ({ size = 24, color = '#fff' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" />
@@ -53,6 +76,9 @@ export const ClockIcon = ({ size = 24, color = '#fff' }) => (
   </Svg>
 );
 
+/**
+ * Ícono de reproducción (play)
+ */
 export const PlayIcon = ({ size = 24, color = '#fff' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
@@ -62,12 +88,18 @@ export const PlayIcon = ({ size = 24, color = '#fff' }) => (
   </Svg>
 );
 
+/**
+ * Ícono de detener (stop)
+ */
 export const StopIcon = ({ size = 24, color = '#fff' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Rect x="6" y="6" width="12" height="12" rx="2" fill={color} />
   </Svg>
 );
 
+/**
+ * Ícono de inicio para navegación
+ */
 export const HomeIconNav = ({ size = 24, color = '#fff' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
@@ -82,6 +114,10 @@ export const HomeIconNav = ({ size = 24, color = '#fff' }) => (
   </Svg>
 );
 
+/**
+ * Ícono de gráfico
+ * Representa estadísticas o análisis
+ */
 export const ChartIcon = ({ size = 24, color = '#fff' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
@@ -101,6 +137,9 @@ export const ChartIcon = ({ size = 24, color = '#fff' }) => (
   </Svg>
 );
 
+/**
+ * Ícono de configuración
+ */
 export const SettingsIcon = ({ size = 24, color = '#fff' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
@@ -114,35 +153,36 @@ export const SettingsIcon = ({ size = 24, color = '#fff' }) => (
   </Svg>
 );
 
+/**
+ * Ícono de menú (hamburguesa)
+ */
 export const MenuIcon = ({ size = 24, color = '#fff' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path d="M3 12h18M3 6h18M3 18h18" stroke={color} strokeWidth="2" strokeLinecap="round" />
   </Svg>
 );
 
+/**
+ * Ícono de sol
+ * Usado para representar modo claro
+ */
 export const SunIcon = ({ size = 24, color = '#fff' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    {/* Rayo superior */}
     <Path d="M12 2 L14 8 L10 8 Z" fill={color} />
-    {/* Rayo superior derecha */}
     <Path d="M18.5 5.5 L15.5 10 L12.5 7 Z" fill={color} />
-    {/* Rayo derecha */}
     <Path d="M22 12 L16 14 L16 10 Z" fill={color} />
-    {/* Rayo inferior derecha */}
     <Path d="M18.5 18.5 L12.5 17 L15.5 14 Z" fill={color} />
-    {/* Rayo inferior */}
     <Path d="M12 22 L10 16 L14 16 Z" fill={color} />
-    {/* Rayo inferior izquierda */}
     <Path d="M5.5 18.5 L8.5 14 L11.5 17 Z" fill={color} />
-    {/* Rayo izquierda */}
     <Path d="M2 12 L8 10 L8 14 Z" fill={color} />
-    {/* Rayo superior izquierda */}
     <Path d="M5.5 5.5 L11.5 7 L8.5 10 Z" fill={color} />
-    {/* Círculo central */}
     <Circle cx="12" cy="12" r="5.5" fill={color} />
   </Svg>
 );
 
+/**
+ * Ícono de luna para modo oscuro
+ */
 export const MoonIconDark = ({ size = 24, color = '#fff' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
@@ -156,6 +196,9 @@ export const MoonIconDark = ({ size = 24, color = '#fff' }) => (
   </Svg>
 );
 
+/**
+ * Ícono de música
+ */
 export const MusicIcon = ({ size = 24, color = '#fff' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
@@ -170,6 +213,9 @@ export const MusicIcon = ({ size = 24, color = '#fff' }) => (
   </Svg>
 );
 
+/**
+ * Ícono de pausa
+ */
 export const PauseIcon = ({ size = 24, color = '#fff' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Rect x="6" y="4" width="4" height="16" rx="1" fill={color} />
@@ -177,6 +223,10 @@ export const PauseIcon = ({ size = 24, color = '#fff' }) => (
   </Svg>
 );
 
+/**
+ * Ícono de flecha izquierda
+ * Usado para navegación o retroceso
+ */
 export const ChevronLeftIcon = ({ size = 24, color = '#fff' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
