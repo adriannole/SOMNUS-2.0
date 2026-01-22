@@ -9,8 +9,24 @@ import {
 } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
 
+// Dimensión de pantalla usada para controlar el ancho del alert
 const { width } = Dimensions.get('window');
 
+/**
+ * CustomAlert
+ *
+ * Componente reutilizable de alerta modal.
+ * Soporta distintos tipos visuales (default, info, warning, danger)
+ * y una cantidad variable de botones con acciones personalizadas.
+ *
+ * Props:
+ * - visible: controla la visibilidad del modal
+ * - onClose: función que se ejecuta al cerrar la alerta
+ * - title: título opcional del alert
+ * - message: mensaje descriptivo opcional
+ * - buttons: arreglo de botones con texto, estilo y acción
+ * - type: tipo visual de la alerta
+ */
 export default function CustomAlert({ 
   visible, 
   onClose, 
@@ -19,7 +35,11 @@ export default function CustomAlert({
   buttons = [],
   type = 'default' // 'default', 'info', 'warning', 'danger'
 }) {
+
+  // Obtiene el tema actual y el modo (claro/oscuro)
   const { theme, isDark } = useTheme();
+
+  // Genera estilos dinámicos según tema y tipo de alerta
   const styles = createStyles(theme, isDark, type);
 
   return (
@@ -29,19 +49,21 @@ export default function CustomAlert({
       animationType="fade"
       onRequestClose={onClose}
     >
+      {/* Capa oscura de fondo */}
       <View style={styles.overlay}>
         <View style={styles.alertContainer}>
-          {/* Title */}
+
+          {/* Título opcional */}
           {title && (
             <Text style={styles.title}>{title}</Text>
           )}
 
-          {/* Message */}
+          {/* Mensaje opcional */}
           {message && (
             <Text style={styles.message}>{message}</Text>
           )}
 
-          {/* Buttons */}
+          {/* Contenedor de botones */}
           <View style={styles.buttonsContainer}>
             {buttons.map((button, index) => {
               const isDestructive = button.style === 'destructive';
@@ -75,13 +97,26 @@ export default function CustomAlert({
               );
             })}
           </View>
+
         </View>
       </View>
     </Modal>
   );
 }
 
+/**
+ * createStyles
+ *
+ * Genera un StyleSheet dinámico basado en:
+ * - Tema actual
+ * - Modo oscuro o claro
+ * - Tipo de alerta
+ *
+ * Centraliza toda la lógica visual del componente.
+ */
 function createStyles(theme, isDark, type) {
+
+  // Determina el color de acento según el tipo de alerta
   const getAccentColorForType = () => {
     switch (type) {
       case 'danger':

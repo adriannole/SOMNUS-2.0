@@ -1,15 +1,26 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Animated, Dimensions } from 'react-native';
 
+// Dimensiones de la ventana (útil para escalado o futuras animaciones)
 const { width, height } = Dimensions.get('window');
 
+/**
+ * AnimatedBackground
+ *
+ * Componente que renderiza un fondo animado con efecto glow.
+ * El efecto se adapta dinámicamente al tema claro u oscuro.
+ *
+ * @param {boolean} isDark - Indica si el tema activo es oscuro
+ * @param {Object} theme - Objeto de tema con colores centralizados
+ */
 export function AnimatedBackground({ isDark, theme }) {
-  // Valor animado (0 -> 1) para controlar glow (opacidad, escala, movimiento)
-  const [glowAnimation] = useState(new Animated.Value(0));
+
+  // Valor animado persistente para controlar el efecto de glow
+  const glowAnimation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Animación de glow continuo (muy sutil)
-    Animated.loop(
+    // Animación cíclica suave para dar sensación de "respiración"
+    const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(glowAnimation, {
           toValue: 1,
@@ -22,68 +33,55 @@ export function AnimatedBackground({ isDark, theme }) {
           useNativeDriver: true,
         }),
       ])
-    ).start();
+    );
+
+    animation.start();
+
+    // Limpieza de la animación al desmontar el componente
+    return () => animation.stop();
   }, [glowAnimation]);
 
-  // Color de fondo general (usa el BACKGROUND_COLOR del theme)
-  const getBackgroundColor = () => {
-    return isDark ? theme.BACKGROUND_COLOR : theme.BACKGROUND_COLOR;
-  };
-
-  // Color de partículas (no se usa aquí, pero queda para futuras mejoras)
-  const getParticleColor = () => {
-    return isDark ? '#7C9EFF' : '#6B8AE3';
-  };
-
-  // Color del glow (círculos)
-  const getGlowColor = () => {
-    return isDark ? '#7C9EFF' : '#6B8AE3';
-  };
+  // Colores derivados del tema
+  const backgroundColor = theme.BACKGROUND_COLOR;
+  const glowColor = isDark ? '#7C9EFF' : '#6B8AE3';
 
   return (
     <View
-      style={[
-        {
-          // Contenedor absoluto para quedar detrás de toda la UI
-          position: 'absolute',
-          width: '100%',
-          height: '100%',
-          top: 0,
-          left: 0,
-          backgroundColor: getBackgroundColor(),
-          overflow: 'hidden',
-          zIndex: 0,
-        },
-      ]}
+      style={{
+        position: 'absolute',
+        width: '100%',
+        height: '100%',
+        top: 0,
+        left: 0,
+        backgroundColor,
+        overflow: 'hidden',
+        zIndex: 0,
+      }}
     >
-      {/* Fondo base sutil */}
+      {/* Capa base de fondo */}
       <View
         style={{
           position: 'absolute',
           width: '100%',
           height: '100%',
-          backgroundColor: getBackgroundColor(),
+          backgroundColor,
         }}
       />
 
-      {/* Círculos de glow animados - Superior */}
+      {/* Glow decorativo superior */}
       <Animated.View
         style={{
           position: 'absolute',
           width: 400,
           height: 400,
           borderRadius: 200,
-          backgroundColor: getGlowColor(),
+          backgroundColor: glowColor,
           top: -150,
           left: -150,
-
-          // Opacidad animada (súper sutil)
           opacity: glowAnimation.interpolate({
             inputRange: [0, 1],
             outputRange: [0.05, 0.09],
           }),
-
-          // Movimiento y escala suave para efecto “respiración”
           transform: [
             {
               scale: glowAnimation.interpolate({
@@ -107,24 +105,20 @@ export function AnimatedBackground({ isDark, theme }) {
         }}
       />
 
-      {/* Círculos de glow animados - Inferior */}
+      {/* Glow decorativo inferior */}
       <Animated.View
         style={{
           position: 'absolute',
           width: 350,
           height: 350,
           borderRadius: 175,
-          backgroundColor: getGlowColor(),
+          backgroundColor: glowColor,
           bottom: -120,
           right: -120,
-
-          // Opacidad animada (súper sutil)
           opacity: glowAnimation.interpolate({
             inputRange: [0, 1],
             outputRange: [0.04, 0.08],
           }),
-
-          // Movimiento y escala suave
           transform: [
             {
               scale: glowAnimation.interpolate({
