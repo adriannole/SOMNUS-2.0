@@ -146,10 +146,10 @@ const buildUserVector = (sleepData: any) => {
   const pickups = sleepData?.nighttimePickups ?? 0;
 
   return normalizeVector([
-    score / 100,
-    hoursSlept / 8,
-    timeAwake / 2,
-    pickups / 10,
+    score / 100,    // Eje 1: Calidad (0-1)
+    hoursSlept / 8, // Eje 2: Horas dormidas (0-1)
+    timeAwake / 2,  // Eje 3: Tiempo despierto
+    pickups / 10,   // Eje 4: Pickups nocturnos
   ]);
 };
 
