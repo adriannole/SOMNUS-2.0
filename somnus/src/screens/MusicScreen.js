@@ -18,24 +18,46 @@ import { getLikedAlbums, getSongsByAlbumId } from '../backend/musicService';
 import { PlayIcon } from '../components/Icons';
 import { Audio } from 'expo-av';
 
+// Cálculos de layout responsivo para el grid de álbumes
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 60) / 2; // 2 columnas con margen
 
+/**
+ * MusicScreen
+ * -----------
+ * Pantalla principal de música:
+ * - Carga los álbumes guardados por el usuario (liked albums)
+ * - Muestra un grid de álbumes con portada y artista
+ * - Permite navegar al detalle de un álbum
+ * - Permite reproducir (play/stop) una canción del álbum (actualmente la primera)
+ *
+ * Maneja estados de UI típicos:
+ * - loading: indicador de carga
+ * - error: vista de error con opción de reintentar
+ * - empty: vista cuando no hay álbumes
+ */
 export default function MusicScreen() {
   const { theme, isDark } = useTheme();
   const router = useRouter();
   const styles = createStyles(theme, isDark);
 
+  // Estado principal de datos y UI
   const [albums, setAlbums] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Estado de reproducción (para reflejar UI de álbum en reproducción)
   const [playingAlbumId, setPlayingAlbumId] = useState(null);
   const [isPlayingAll, setIsPlayingAll] = useState(false);
+
+  // Referencia al objeto de sonido para controlar play/stop/unload sin re-render
   const soundRef = React.useRef(null);
 
   useEffect(() => {
+    // Carga inicial de álbumes guardados
     loadLikedAlbums();
     
+    // Cleanup: liberar recursos de audio al desmontar la pantalla
     return () => {
       if (soundRef.current) {
         soundRef.current.unloadAsync().catch(() => {});
@@ -43,6 +65,10 @@ export default function MusicScreen() {
     };
   }, []);
 
+  /**
+   * Carga los álbumes guardados desde el servicio backend.
+   * Centraliza manejo de loading/error y logs de diagnóstico.
+   */
   const loadLikedAlbums = async () => {
     setLoading(true);
     setError(null);
@@ -59,18 +85,25 @@ export default function MusicScreen() {
     }
   };
 
+  /**
+   * Controla reproducción del álbum:
+   * - Si el mismo álbum ya está reproduciéndose, detiene y libera el audio.
+   * - Si es otro álbum, detiene lo anterior y reproduce la primera canción disponible.
+   *
+   * Nota: Se usa stopPropagation para que el botón Play no dispare navegación al detalle.
+   */
   const handlePlayAll = async (album, e) => {
     e.stopPropagation();
     try {
-      // Get songs for this album
+      // Obtener canciones del álbum seleccionado
       const songs = await getSongsByAlbumId(album.id);
       if (songs.length === 0) {
         Alert.alert('No hay canciones', 'Este álbum aún no tiene canciones disponibles');
         return;
       }
 
+      // Toggle: si ya está reproduciendo este álbum, se detiene
       if (playingAlbumId === album.id && isPlayingAll) {
-        // Stop playback
         if (soundRef.current) {
           await soundRef.current.stopAsync();
           await soundRef.current.unloadAsync();
@@ -79,13 +112,13 @@ export default function MusicScreen() {
         setPlayingAlbumId(null);
         setIsPlayingAll(false);
       } else {
-        // Stop any previous playback
+        // Detener cualquier reproducción anterior antes de iniciar una nueva
         if (soundRef.current) {
           await soundRef.current.stopAsync();
           await soundRef.current.unloadAsync();
         }
 
-        // Play first song
+        // Reproducir la primera canción (base para futuros "auto-advance" o playlist)
         const firstSong = songs[0];
         console.log('[MusicScreen] 🎵 Playing:', firstSong.title, 'from', album.title);
         
@@ -97,7 +130,7 @@ export default function MusicScreen() {
         setPlayingAlbumId(album.id);
         setIsPlayingAll(true);
 
-        // Handle song finish
+        // Hook de estado de reproducción (útil para auto-avance o UI de progreso)
         sound.setOnPlaybackStatusUpdate((status) => {
           if (status.didJustFinish) {
             console.log('[MusicScreen] Song finished, could implement auto-advance here');
@@ -110,6 +143,10 @@ export default function MusicScreen() {
     }
   };
 
+  /**
+   * Navega a la pantalla de detalle del álbum,
+   * pasando datos necesarios vía params.
+   */
   const handleAlbumPress = (album) => {
     console.log('[MusicScreen]  Navigating to album detail:', album.title);
     router.push({
@@ -123,6 +160,12 @@ export default function MusicScreen() {
     });
   };
 
+  /**
+   * Render de tarjeta de álbum:
+   * - Portada (o placeholder)
+   * - Botón play superpuesto
+   * - Info de álbum (título, artista)
+   */
   const renderAlbumCard = (album) => (
     <TouchableOpacity
       key={album.id}
@@ -143,7 +186,7 @@ export default function MusicScreen() {
           </View>
         )}
         
-        {/* Botón de play superpuesto */}
+        {/* Botón de play superpuesto (acción independiente a la navegación) */}
         <TouchableOpacity 
           style={styles.playOverlay}
           activeOpacity={0.7}
@@ -168,6 +211,7 @@ export default function MusicScreen() {
     </TouchableOpacity>
   );
 
+  // Estado: Cargando
   if (loading) {
     return (
       <>
@@ -180,6 +224,7 @@ export default function MusicScreen() {
     );
   }
 
+  // Estado: Error
   if (error) {
     return (
       <>
@@ -194,6 +239,7 @@ export default function MusicScreen() {
     );
   }
 
+  // Estado: Sin datos
   if (albums.length === 0) {
     return (
       <>
@@ -238,6 +284,12 @@ export default function MusicScreen() {
   );
 }
 
+/**
+ * createStyles
+ * ------------
+ * Genera estilos dinámicos según el tema (light/dark).
+ * Mantiene consistencia visual y evita hardcode de colores en el JSX.
+ */
 function createStyles(theme, isDark) {
   return StyleSheet.create({
     screen: {
